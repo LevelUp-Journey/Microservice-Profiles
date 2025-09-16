@@ -75,4 +75,5 @@ public class Profile extends AuditableAbstractAggregateRoot<Profile> {
     public void updateProfileUrl(String profileUrl) {
         this.profileUrl = new ProfileUrl(profileUrl);
     }
+
 }
