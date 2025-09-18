@@ -1,4 +1,4 @@
-package com.levelupjourney.microserviceprofiles.shared.interfaces.rest.configuration;
+package com.levelup.journey.platform.microserviceprofiles.shared.interfaces.rest.configuration;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;

@@ -1,4 +1,4 @@
-package com.levelupjourney.microserviceprofiles.shared.infrastructure.documentation.openapi.configuration;
+package com.levelup.journey.platform.microserviceprofiles.shared.infrastructure.documentation.openapi.configuration;
 
 
 import io.swagger.v3.oas.models.Components;

@@ -1,4 +1,4 @@
-package com.levelupjourney.microserviceprofiles.shared.domain.model.entities;
+package com.levelup.journey.platform.microserviceprofiles.shared.domain.model.entities;
 
 import jakarta.persistence.*;
 import lombok.Getter;
