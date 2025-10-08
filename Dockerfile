@@ -31,7 +31,7 @@ RUN groupadd -r appuser && useradd -r -g appuser appuser
 WORKDIR /app
 
 # Copy the JAR from build stage
-COPY --from=build /app/target/microservice-iam-*.jar app.jar
+COPY --from=build /app/target/microserviceprofiles-*.jar app.jar
 
 # Change ownership to non-root user
 RUN chown -R appuser:appuser /app
