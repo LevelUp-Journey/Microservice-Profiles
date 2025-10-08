@@ -2,7 +2,9 @@ package com.levelup.journey.platform.microserviceprofiles.profiles.application.i
 
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.aggregates.Profile;
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.commands.CreateProfileCommand;
+import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.commands.CreateProfileFromUserCommand;
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.commands.CreateProfileRankCommand;
+import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.valueobjects.UserId;
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.services.ProfileCommandService;
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.services.ProfileRankCommandService;
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.services.UsernameGeneratorService;
@@ -41,6 +43,31 @@ public class ProfileCommandServiceImpl implements ProfileCommandService {
     @Transactional
     public Optional<Profile> handle(CreateProfileCommand command) {
         var username = usernameGeneratorService.generateUniqueUsername();
+        var profile = new Profile(command, username);
+        var savedProfile = profileRepository.save(profile);
+
+        // Automatically create profile rank for the new profile
+        var createProfileRankCommand = new CreateProfileRankCommand(savedProfile.getId());
+        profileRankCommandService.handle(createProfileRankCommand);
+
+        return Optional.of(savedProfile);
+    }
+
+    // inherited javadoc
+    @Override
+    @Transactional
+    public Optional<Profile> handle(CreateProfileFromUserCommand command) {
+        var userId = new UserId(command.userId());
+
+        // Check if profile already exists for this user ID
+        if (profileRepository.existsByUserId(userId)) {
+            throw new IllegalArgumentException("Profile already exists for user ID: " + command.userId());
+        }
+
+        // Generate unique username
+        var username = usernameGeneratorService.generateUniqueUsername();
+
+        // Create and save profile
         var profile = new Profile(command, username);
         var savedProfile = profileRepository.save(profile);
 

@@ -1,6 +1,8 @@
 package com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.aggregates;
 
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.commands.CreateProfileCommand;
+import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.commands.CreateProfileFromUserCommand;
+import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.valueobjects.UserId;
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.valueobjects.Username;
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.valueobjects.PersonName;
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.valueobjects.ProfileUrl;
@@ -9,6 +11,11 @@ import jakarta.persistence.*;
 
 @Entity
 public class Profile extends AuditableAbstractAggregateRoot<Profile> {
+    @Embedded
+    @AttributeOverrides({
+            @AttributeOverride(name = "userId", column = @Column(name = "user_id", unique = true))})
+    private UserId userId;
+
     @Embedded
     private PersonName name;
 
@@ -39,6 +46,13 @@ public class Profile extends AuditableAbstractAggregateRoot<Profile> {
                 username,
                 command.profileUrl()
         );
+    }
+
+    public Profile(CreateProfileFromUserCommand command, String username) {
+        this.userId = new UserId(command.userId());
+        this.name = new PersonName(command.firstName(), command.lastName());
+        this.username = new Username(username);
+        this.profileUrl = new ProfileUrl(command.profileUrl());
     }
 
     public String getFullName() {
@@ -74,6 +88,10 @@ public class Profile extends AuditableAbstractAggregateRoot<Profile> {
 
     public void updateProfileUrl(String profileUrl) {
         this.profileUrl = new ProfileUrl(profileUrl);
+    }
+
+    public String getUserId() {
+        return userId != null ? userId.userId() : null;
     }
 
 }
