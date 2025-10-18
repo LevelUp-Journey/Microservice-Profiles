@@ -4,6 +4,7 @@ import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.a
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.queries.GetAllProfilesQuery;
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.queries.GetProfileByUsernameQuery;
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.queries.GetProfileByIdQuery;
+import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.queries.GetProfileByUserIdQuery;
 
 import java.util.List;
 import java.util.Optional;
@@ -27,6 +28,14 @@ public interface ProfileQueryService {
      * @return A {@link Profile} instance if the query is valid, otherwise empty
      */
     Optional<Profile> handle(GetProfileByUsernameQuery query);
+
+    /**
+     * Handle Get Profile By User ID Query
+     *
+     * @param query The {@link GetProfileByUserIdQuery} Query
+     * @return A {@link Profile} instance if the query is valid, otherwise empty
+     */
+    Optional<Profile> handle(GetProfileByUserIdQuery query);
 
     /**
      * Handle Get All Profiles Query

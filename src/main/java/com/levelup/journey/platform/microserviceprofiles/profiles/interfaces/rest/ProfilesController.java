@@ -2,6 +2,8 @@ package com.levelup.journey.platform.microserviceprofiles.profiles.interfaces.re
 
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.queries.GetAllProfilesQuery;
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.queries.GetProfileByIdQuery;
+import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.queries.GetProfileByUserIdQuery;
+import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.valueobjects.UserId;
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.services.ProfileCommandService;
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.services.ProfileQueryService;
 import com.levelup.journey.platform.microserviceprofiles.profiles.interfaces.rest.resources.CreateProfileResource;
@@ -72,6 +74,25 @@ public class ProfilesController {
     public ResponseEntity<ProfileResource> getProfileById(@PathVariable UUID profileId) {
         var getProfileByIdQuery = new GetProfileByIdQuery(profileId);
         var profile = profileQueryService.handle(getProfileByIdQuery);
+        if (profile.isEmpty()) return ResponseEntity.notFound().build();
+        var profileEntity = profile.get();
+        var profileResource = ProfileResourceFromEntityAssembler.toResourceFromEntity(profileEntity);
+        return ResponseEntity.ok(profileResource);
+    }
+
+    /**
+     * Get a profile by User ID
+     * @param userId The user ID from IAM service
+     * @return A {@link ProfileResource} resource for the profile, or a not found response if the profile could not be found.
+     */
+    @GetMapping("/user/{userId}")
+    @Operation(summary = "Get a profile by User ID", description = "Retrieves a profile associated with the given IAM user ID")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Profile found"),
+            @ApiResponse(responseCode = "404", description = "Profile not found for the given user ID")})
+    public ResponseEntity<ProfileResource> getProfileByUserId(@PathVariable String userId) {
+        var getProfileByUserIdQuery = new GetProfileByUserIdQuery(new UserId(userId));
+        var profile = profileQueryService.handle(getProfileByUserIdQuery);
         if (profile.isEmpty()) return ResponseEntity.notFound().build();
         var profileEntity = profile.get();
         var profileResource = ProfileResourceFromEntityAssembler.toResourceFromEntity(profileEntity);
