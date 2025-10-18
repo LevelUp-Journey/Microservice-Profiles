@@ -9,6 +9,8 @@ import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.v
 import com.levelup.journey.platform.microserviceprofiles.shared.domain.model.aggregates.AuditableAbstractAggregateRoot;
 import jakarta.persistence.*;
 
+import java.util.UUID;
+
 @Entity
 public class Profile extends AuditableAbstractAggregateRoot<Profile> {
     @Embedded
@@ -49,6 +51,7 @@ public class Profile extends AuditableAbstractAggregateRoot<Profile> {
     }
 
     public Profile(CreateProfileFromUserCommand command, String username) {
+        this.id = UUID.fromString(command.userId());
         this.userId = new UserId(command.userId());
         this.name = new PersonName(command.firstName(), command.lastName());
         this.username = new Username(username);

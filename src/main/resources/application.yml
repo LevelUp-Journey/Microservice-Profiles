@@ -1,0 +1,73 @@
+spring:
+  application:
+    name: microservice-profiles
+
+# ===================================================
+# PostgreSQL Configuration
+# ===================================================
+  datasource:
+    url: ${POSTGRES_URL}
+    username: ${POSTGRES_USERNAME}
+    password: ${POSTGRES_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: false
+    show-sql: true
+
+# ===================================================
+# Docker Compose Configuration
+# ===================================================
+  docker:
+    compose:
+      enabled: false
+
+# ===================================================
+# Kafka Configuration
+# ===================================================
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      group-id: ${KAFKA_CONSUMER_GROUP_ID:profile-service-group}
+      topic:
+        user-registered: ${KAFKA_TOPIC_USER_REGISTERED:iam.user.registered}
+      auto-offset-reset: earliest
+      enable-auto-commit: true
+
+# ===================================================
+# Swagger & OpenAPI Configuration
+# ===================================================
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    disable-swagger-default-url: true
+
+# OpenAPI Documentation
+documentation:
+  application:
+    description: Level Up Journey - Profiles Management Microservice for user profile and gamification features.
+    version: 1.0.0
+
+# ===================================================
+# Server Configuration
+# ===================================================
+server:
+  port: ${PORT:8082}
+
+# ===================================================
+# CORS Configuration
+# ===================================================
+app:
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:8080}
+    allowed-methods: ${CORS_ALLOWED_METHODS:GET,POST,PUT,DELETE,PATCH,OPTIONS}
+    allowed-headers: ${CORS_ALLOWED_HEADERS:*}
+    allow-credentials: ${CORS_ALLOW_CREDENTIALS:true}
+    max-age: ${CORS_MAX_AGE:3600}
