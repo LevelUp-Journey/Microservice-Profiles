@@ -2,17 +2,19 @@ package com.levelup.journey.platform.microserviceprofiles.profiles.interfaces.re
 
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.queries.GetAllProfilesQuery;
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.queries.GetProfileByIdQuery;
+import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.queries.GetProfileByUserIdQuery;
+import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.valueobjects.UserId;
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.services.ProfileCommandService;
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.services.ProfileQueryService;
-import com.levelup.journey.platform.microserviceprofiles.profiles.interfaces.rest.resources.CreateProfileResource;
 import com.levelup.journey.platform.microserviceprofiles.profiles.interfaces.rest.resources.ProfileResource;
-import com.levelup.journey.platform.microserviceprofiles.profiles.interfaces.rest.transform.CreateProfileCommandFromResourceAssembler;
+import com.levelup.journey.platform.microserviceprofiles.profiles.interfaces.rest.resources.UpdateProfileResource;
 import com.levelup.journey.platform.microserviceprofiles.profiles.interfaces.rest.transform.ProfileResourceFromEntityAssembler;
+import com.levelup.journey.platform.microserviceprofiles.profiles.interfaces.rest.transform.UpdateProfileCommandFromResourceAssembler;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.http.HttpStatus;
+import jakarta.validation.Valid;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -41,25 +43,6 @@ public class ProfilesController {
     }
 
     /**
-     * Create a new profile
-     * @param resource The {@link CreateProfileResource} instance
-     * @return A {@link ProfileResource} resource for the created profile, or a bad request response if the profile could not be created.
-     */
-    @PostMapping
-    @Operation(summary = "Create a new profile")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "Profile created"),
-            @ApiResponse(responseCode = "400", description = "Bad request")})
-    public ResponseEntity<ProfileResource> createProfile(@RequestBody CreateProfileResource resource) {
-        var createProfileCommand = CreateProfileCommandFromResourceAssembler.toCommandFromResource(resource);
-        var profile = profileCommandService.handle(createProfileCommand);
-        if (profile.isEmpty()) return ResponseEntity.badRequest().build();
-        var createdProfile = profile.get();
-        var profileResource = ProfileResourceFromEntityAssembler.toResourceFromEntity(createdProfile);
-        return new ResponseEntity<>(profileResource, HttpStatus.CREATED);
-    }
-
-    /**
      * Get a profile by ID
      * @param profileId The profile ID
      * @return A {@link ProfileResource} resource for the profile, or a not found response if the profile could not be found.
@@ -72,6 +55,52 @@ public class ProfilesController {
     public ResponseEntity<ProfileResource> getProfileById(@PathVariable UUID profileId) {
         var getProfileByIdQuery = new GetProfileByIdQuery(profileId);
         var profile = profileQueryService.handle(getProfileByIdQuery);
+        if (profile.isEmpty()) return ResponseEntity.notFound().build();
+        var profileEntity = profile.get();
+        var profileResource = ProfileResourceFromEntityAssembler.toResourceFromEntity(profileEntity);
+        return ResponseEntity.ok(profileResource);
+    }
+
+    /**
+     * Update a profile
+     * @param profileId The profile ID
+     * @param resource The {@link UpdateProfileResource} instance
+     * @return A {@link ProfileResource} resource for the updated profile, or a not found/bad request response if the profile could not be updated.
+     */
+    @PutMapping("/{profileId}")
+    @Operation(summary = "Update an existing profile", description = "Updates profile information including first name, last name, username, and profile URL")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Profile updated successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid input data or username already exists"),
+            @ApiResponse(responseCode = "404", description = "Profile not found")})
+    public ResponseEntity<ProfileResource> updateProfile(
+            @PathVariable UUID profileId,
+            @Valid @RequestBody UpdateProfileResource resource) {
+        try {
+            var updateProfileCommand = UpdateProfileCommandFromResourceAssembler.toCommandFromResource(profileId, resource);
+            var profile = profileCommandService.handle(updateProfileCommand);
+            if (profile.isEmpty()) return ResponseEntity.notFound().build();
+            var updatedProfile = profile.get();
+            var profileResource = ProfileResourceFromEntityAssembler.toResourceFromEntity(updatedProfile);
+            return ResponseEntity.ok(profileResource);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    /**
+     * Get a profile by User ID
+     * @param userId The user ID from IAM service
+     * @return A {@link ProfileResource} resource for the profile, or a not found response if the profile could not be found.
+     */
+    @GetMapping("/user/{userId}")
+    @Operation(summary = "Get a profile by User ID", description = "Retrieves a profile associated with the given IAM user ID")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Profile found"),
+            @ApiResponse(responseCode = "404", description = "Profile not found for the given user ID")})
+    public ResponseEntity<ProfileResource> getProfileByUserId(@PathVariable String userId) {
+        var getProfileByUserIdQuery = new GetProfileByUserIdQuery(new UserId(userId));
+        var profile = profileQueryService.handle(getProfileByUserIdQuery);
         if (profile.isEmpty()) return ResponseEntity.notFound().build();
         var profileEntity = profile.get();
         var profileResource = ProfileResourceFromEntityAssembler.toResourceFromEntity(profileEntity);

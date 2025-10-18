@@ -8,7 +8,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDateTime;
 import java.util.Map;
 
 /**
@@ -40,15 +39,14 @@ public class UserRegisteredEventListener {
             logger.info("Received user registration event: {}", message);
 
             // Parse JSON message
+            @SuppressWarnings("unchecked")
             Map<String, Object> event = objectMapper.readValue(message, Map.class);
 
             // Extract data from event
             String userId = (String) event.get("userId");
-            String email = (String) event.get("email");
             String firstName = (String) event.get("firstName");
             String lastName = (String) event.get("lastName");
             String profileUrl = (String) event.get("profileUrl");
-            String provider = (String) event.get("provider");
 
             // Create command
             var command = new CreateProfileFromUserCommand(

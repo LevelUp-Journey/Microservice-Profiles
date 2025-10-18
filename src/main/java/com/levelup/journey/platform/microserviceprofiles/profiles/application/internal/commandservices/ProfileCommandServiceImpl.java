@@ -1,12 +1,11 @@
 package com.levelup.journey.platform.microserviceprofiles.profiles.application.internal.commandservices;
 
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.aggregates.Profile;
-import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.commands.CreateProfileCommand;
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.commands.CreateProfileFromUserCommand;
-import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.commands.CreateProfileRankCommand;
+import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.commands.UpdateProfileCommand;
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.valueobjects.UserId;
+import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.valueobjects.Username;
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.services.ProfileCommandService;
-import com.levelup.journey.platform.microserviceprofiles.profiles.domain.services.ProfileRankCommandService;
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.services.UsernameGeneratorService;
 import com.levelup.journey.platform.microserviceprofiles.profiles.infrastructure.persistence.jpa.repositories.ProfileRepository;
 import org.springframework.stereotype.Service;
@@ -21,36 +20,17 @@ import java.util.Optional;
 public class ProfileCommandServiceImpl implements ProfileCommandService {
     private final ProfileRepository profileRepository;
     private final UsernameGeneratorService usernameGeneratorService;
-    private final ProfileRankCommandService profileRankCommandService;
 
     /**
      * Constructor
      *
      * @param profileRepository The {@link ProfileRepository} instance
      * @param usernameGeneratorService The {@link UsernameGeneratorService} instance
-     * @param profileRankCommandService The {@link ProfileRankCommandService} instance
      */
     public ProfileCommandServiceImpl(ProfileRepository profileRepository,
-                                   UsernameGeneratorService usernameGeneratorService,
-                                   ProfileRankCommandService profileRankCommandService) {
+                                   UsernameGeneratorService usernameGeneratorService) {
         this.profileRepository = profileRepository;
         this.usernameGeneratorService = usernameGeneratorService;
-        this.profileRankCommandService = profileRankCommandService;
-    }
-
-    // inherited javadoc
-    @Override
-    @Transactional
-    public Optional<Profile> handle(CreateProfileCommand command) {
-        var username = usernameGeneratorService.generateUniqueUsername();
-        var profile = new Profile(command, username);
-        var savedProfile = profileRepository.save(profile);
-
-        // Automatically create profile rank for the new profile
-        var createProfileRankCommand = new CreateProfileRankCommand(savedProfile.getId());
-        profileRankCommandService.handle(createProfileRankCommand);
-
-        return Optional.of(savedProfile);
     }
 
     // inherited javadoc
@@ -71,9 +51,32 @@ public class ProfileCommandServiceImpl implements ProfileCommandService {
         var profile = new Profile(command, username);
         var savedProfile = profileRepository.save(profile);
 
-        // Automatically create profile rank for the new profile
-        var createProfileRankCommand = new CreateProfileRankCommand(savedProfile.getId());
-        profileRankCommandService.handle(createProfileRankCommand);
+        return Optional.of(savedProfile);
+    }
+
+    // inherited javadoc
+    @Override
+    @Transactional
+    public Optional<Profile> handle(UpdateProfileCommand command) {
+        // Find profile by ID
+        var profile = profileRepository.findById(command.profileId())
+                .orElseThrow(() -> new IllegalArgumentException("Profile not found with ID: " + command.profileId()));
+
+        // Check if username is being changed and if it's already taken by another profile
+        if (!profile.getUsername().equals(command.username())) {
+            var username = new Username(command.username());
+            if (profileRepository.existsByUsername(username)) {
+                throw new IllegalArgumentException("Username already exists: " + command.username());
+            }
+            profile.updateUsername(command.username());
+        }
+
+        // Update profile fields
+        profile.updateName(command.firstName(), command.lastName());
+        profile.updateProfileUrl(command.profileUrl());
+
+        // Save updated profile
+        var savedProfile = profileRepository.save(profile);
 
         return Optional.of(savedProfile);
     }

@@ -23,7 +23,7 @@ import java.util.UUID;
 public class AuditableAbstractAggregateRoot<T extends AbstractAggregateRoot<T>> extends AbstractAggregateRoot<T> {
     @Id
     @UuidGenerator
-    private UUID id;
+    protected UUID id;
 
     @CreatedDate
     @Column(nullable = false, updatable = false)
