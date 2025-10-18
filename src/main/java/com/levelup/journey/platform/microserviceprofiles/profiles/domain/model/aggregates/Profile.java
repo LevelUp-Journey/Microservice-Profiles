@@ -8,11 +8,12 @@ import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.v
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.valueobjects.ProfileUrl;
 import com.levelup.journey.platform.microserviceprofiles.shared.domain.model.aggregates.AuditableAbstractAggregateRoot;
 import jakarta.persistence.*;
+import org.springframework.data.domain.Persistable;
 
 import java.util.UUID;
 
 @Entity
-public class Profile extends AuditableAbstractAggregateRoot<Profile> {
+public class Profile extends AuditableAbstractAggregateRoot<Profile> implements Persistable<UUID> {
     @Embedded
     @AttributeOverrides({
             @AttributeOverride(name = "userId", column = @Column(name = "user_id", unique = true))})
@@ -30,6 +31,9 @@ public class Profile extends AuditableAbstractAggregateRoot<Profile> {
     @AttributeOverrides({
             @AttributeOverride(name = "url", column = @Column(name = "profile_url"))})
     private ProfileUrl profileUrl;
+
+    @Transient
+    private boolean isNew = true;
 
     public Profile(String firstName, String lastName, String username, String profileUrl) {
         this.name = new PersonName(firstName, lastName);
@@ -51,7 +55,6 @@ public class Profile extends AuditableAbstractAggregateRoot<Profile> {
     }
 
     public Profile(CreateProfileFromUserCommand command, String username) {
-        this.id = UUID.fromString(command.userId());
         this.userId = new UserId(command.userId());
         this.name = new PersonName(command.firstName(), command.lastName());
         this.username = new Username(username);
@@ -95,6 +98,22 @@ public class Profile extends AuditableAbstractAggregateRoot<Profile> {
 
     public String getUserId() {
         return userId != null ? userId.userId() : null;
+    }
+
+    @Override
+    public UUID getId() {
+        return id;
+    }
+
+    @Override
+    public boolean isNew() {
+        return isNew;
+    }
+
+    @PostPersist
+    @PostLoad
+    void markNotNew() {
+        this.isNew = false;
     }
 
 }
