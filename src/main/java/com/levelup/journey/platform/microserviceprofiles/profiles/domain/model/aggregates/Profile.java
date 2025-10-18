@@ -1,6 +1,5 @@
 package com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.aggregates;
 
-import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.commands.CreateProfileCommand;
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.commands.CreateProfileFromUserCommand;
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.valueobjects.UserId;
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.valueobjects.Username;
@@ -45,15 +44,6 @@ public class Profile extends AuditableAbstractAggregateRoot<Profile> implements 
         // Default constructor for JPA
     }
 
-    public Profile(CreateProfileCommand command, String username) {
-        this(
-                command.firstName(),
-                command.lastName(),
-                username,
-                command.profileUrl()
-        );
-    }
-
     public Profile(CreateProfileFromUserCommand command, String username) {
         this.userId = new UserId(command.userId());
         this.name = new PersonName(command.firstName(), command.lastName());
@@ -86,9 +76,9 @@ public class Profile extends AuditableAbstractAggregateRoot<Profile> implements 
     }
 
     public void updateUsername(String username) {
-        // Username constructor automatically detects if it's:
-        // - Generated format (USER + 9 digits): applies strict validation
-        // - Edited format (other): applies flexible validation (3-50 chars, alphanumeric + _.- only)
+        // Username allows both:
+        // - Generated format (USER + 9 digits)
+        // - Custom format (3-15 chars, alphanumeric + _.-)
         this.username = new Username(username);
     }
 

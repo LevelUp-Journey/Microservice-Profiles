@@ -7,10 +7,9 @@ import java.util.regex.Pattern;
 @Embeddable
 public record Username(String username) {
 
-    // Username must ALWAYS be USER + exactly 9 digits (13 characters total)
-    private static final Pattern VALID_USERNAME_PATTERN = Pattern.compile("^USER\\d{9}$");
-    private static final int EXPECTED_LENGTH = 13; // USER + 9 digits
-    private static final String INVALID_USERNAME_MESSAGE = "Username must start with 'USER' followed by exactly 9 digits (total 13 characters)";
+    // Username must be either USER + exactly 9 digits (13 characters total) or custom 3-15 chars
+    private static final Pattern VALID_USERNAME_PATTERN = Pattern.compile("^(?:USER\\d{9}|[a-zA-Z0-9_.-]{3,15})$");
+    private static final String INVALID_USERNAME_MESSAGE = "Username must be either auto-generated format (USER + 9 digits) or custom (3-15 alphanumeric characters, underscores, dots, or hyphens)";
 
     public Username() {
         this(null);
@@ -21,7 +20,7 @@ public record Username(String username) {
     }
 
     /**
-     * Validate username format - ALWAYS must be USER + 9 digits
+     * Validate username format - USER + 9 digits or custom 3-50 chars
      */
     private static void validateUsername(String username) {
         if (username == null || username.trim().isEmpty()) {
@@ -30,10 +29,6 @@ public record Username(String username) {
 
         String trimmedUsername = username.trim();
         
-        if (trimmedUsername.length() != EXPECTED_LENGTH) {
-            throw new IllegalArgumentException("Username must be exactly " + EXPECTED_LENGTH + " characters long");
-        }
-
         if (!VALID_USERNAME_PATTERN.matcher(trimmedUsername).matches()) {
             throw new IllegalArgumentException(INVALID_USERNAME_MESSAGE);
         }
