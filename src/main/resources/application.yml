@@ -36,6 +36,7 @@ spring:
       group-id: ${KAFKA_CONSUMER_GROUP_ID:profile-service-group}
       topic:
         user-registered: ${KAFKA_TOPIC_USER_REGISTERED:iam.user.registered}
+        challenge-completed: ${KAFKA_TOPIC_CHALLENGE_COMPLETED:challenge.completed}
       auto-offset-reset: earliest
       enable-auto-commit: true
 
