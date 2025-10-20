@@ -9,6 +9,7 @@ import com.levelup.journey.platform.microserviceprofiles.competitive.domain.mode
 import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.valueobjects.CompetitiveUserId;
 import com.levelup.journey.platform.microserviceprofiles.competitive.domain.services.CompetitiveProfileQueryService;
 import com.levelup.journey.platform.microserviceprofiles.competitive.infrastructure.persistence.jpa.repositories.CompetitiveProfileRepository;
+import com.levelup.journey.platform.microserviceprofiles.competitive.infrastructure.persistence.jpa.repositories.RankRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.PageRequest;
@@ -27,10 +28,13 @@ public class CompetitiveProfileQueryServiceImpl implements CompetitiveProfileQue
 
     private static final Logger logger = LoggerFactory.getLogger(CompetitiveProfileQueryServiceImpl.class);
     private final CompetitiveProfileRepository competitiveProfileRepository;
+    private final RankRepository rankRepository;
 
     public CompetitiveProfileQueryServiceImpl(
-            CompetitiveProfileRepository competitiveProfileRepository) {
+            CompetitiveProfileRepository competitiveProfileRepository,
+            RankRepository rankRepository) {
         this.competitiveProfileRepository = competitiveProfileRepository;
+        this.rankRepository = rankRepository;
     }
 
     @Override
@@ -64,7 +68,11 @@ public class CompetitiveProfileQueryServiceImpl implements CompetitiveProfileQue
     public List<CompetitiveProfile> handle(GetUsersByRankQuery query) {
         logger.debug("Fetching users with rank: {}", query.rank());
 
-        return competitiveProfileRepository.findByCurrentRank(query.rank());
+        // Find the rank entity by enum value
+        var rankEntity = rankRepository.findByRankName(query.rank())
+                .orElseThrow(() -> new IllegalArgumentException("Rank not found: " + query.rank()));
+
+        return competitiveProfileRepository.findByCurrentRank(rankEntity);
     }
 
     @Override

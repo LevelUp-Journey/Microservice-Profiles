@@ -6,6 +6,7 @@ import com.levelup.journey.platform.microserviceprofiles.competitive.domain.mode
 import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.queries.GetLeaderboardQuery;
 import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.queries.GetUserRankingPositionQuery;
 import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.queries.GetUsersByRankQuery;
+import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.queries.GetUsersByRankQuery;
 import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.valueobjects.CompetitiveRank;
 import com.levelup.journey.platform.microserviceprofiles.competitive.domain.services.CompetitiveProfileCommandService;
 import com.levelup.journey.platform.microserviceprofiles.competitive.domain.services.CompetitiveProfileQueryService;

@@ -16,7 +16,8 @@ public class CompetitiveProfileResourceFromEntityAssembler {
      * @return CompetitiveProfileResource
      */
     public static CompetitiveProfileResource toResourceFromEntity(CompetitiveProfile entity) {
-        var currentRankEnum = entity.getCurrentRank();
+        var currentRankEntity = entity.getCurrentRank();
+        var currentRankEnum = currentRankEntity.getRankName();
         var nextRank = currentRankEnum.getNextRank();
         var pointsNeeded = nextRank != null ? nextRank.getMinimumPoints() - entity.getTotalPoints() : 0;
 

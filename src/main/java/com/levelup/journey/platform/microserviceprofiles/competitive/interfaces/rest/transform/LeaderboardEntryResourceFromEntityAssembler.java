@@ -20,7 +20,7 @@ public class LeaderboardEntryResourceFromEntityAssembler {
                 entity.getLeaderboardPosition(),
                 entity.getUserId(),
                 entity.getTotalPoints(),
-                entity.getCurrentRank().name()
+                entity.getCurrentRank().getRankName().name()
         );
     }
 }

@@ -1,7 +1,7 @@
 package com.levelup.journey.platform.microserviceprofiles.competitive.infrastructure.persistence.jpa.repositories;
 
 import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.aggregates.CompetitiveProfile;
-import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.valueobjects.CompetitiveRank;
+import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.entities.Rank;
 import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.valueobjects.CompetitiveUserId;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -37,12 +37,12 @@ public interface CompetitiveProfileRepository extends JpaRepository<CompetitiveP
     boolean existsByUserId(CompetitiveUserId userId);
 
     /**
-     * Find all profiles by competitive rank
+     * Find all profiles by competitive rank entity
      *
-     * @param rank The competitive rank enum
+     * @param rank The rank entity
      * @return List of profiles with specified rank
      */
-    List<CompetitiveProfile> findByCurrentRank(CompetitiveRank rank);
+    List<CompetitiveProfile> findByCurrentRank(Rank rank);
 
     /**
      * Find top N profiles ordered by total points descending
@@ -94,9 +94,9 @@ public interface CompetitiveProfileRepository extends JpaRepository<CompetitiveP
     /**
      * Find profiles in TOP500 range
      *
-     * @param rank The TOP500 rank enum
+     * @param rank The TOP500 rank entity
      * @return List of TOP500 profiles
      */
     @Query("SELECT cp FROM CompetitiveProfile cp WHERE cp.currentRank = :rank ORDER BY cp.totalPoints.value DESC")
-    List<CompetitiveProfile> findTop500Profiles(@Param("rank") CompetitiveRank rank);
+    List<CompetitiveProfile> findTop500Profiles(@Param("rank") Rank rank);
 }

@@ -21,7 +21,7 @@ public class UserRankingPositionResourceFromEntityAssembler {
                 entity.getUserId(),
                 position,
                 entity.getTotalPoints(),
-                entity.getCurrentRank().name()
+                entity.getCurrentRank().getRankName().name()
         );
     }
 }

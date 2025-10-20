@@ -1,0 +1,111 @@
+package com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.entities;
+
+import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.valueobjects.CompetitiveRank;
+import jakarta.persistence.*;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
+import java.util.Date;
+
+/**
+ * Rank Entity
+ * Represents a competitive rank as a database entity
+ * This is a reference/master data table
+ */
+@Entity
+@Table(name = "ranks")
+@EntityListeners(AuditingEntityListener.class)
+public class Rank {
+
+    @Id
+    @Column(name = "id", length = 20)
+    private String id;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "rank_name", nullable = false, unique = true, length = 20)
+    private CompetitiveRank rankName;
+
+    @Column(name = "minimum_points", nullable = false)
+    private Integer minimumPoints;
+
+    @CreatedDate
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private Date createdAt;
+
+    @LastModifiedDate
+    @Column(name = "updated_at")
+    private Date updatedAt;
+
+    protected Rank() {
+        // JPA constructor
+    }
+
+    /**
+     * Constructor for Rank entity
+     *
+     * @param rankName The competitive rank enum value
+     * @param minimumPoints Minimum points required for this rank
+     */
+    public Rank(CompetitiveRank rankName, Integer minimumPoints) {
+        this.id = rankName.name();
+        this.rankName = rankName;
+        this.minimumPoints = minimumPoints;
+    }
+
+    /**
+     * Get the competitive rank enum value
+     */
+    public CompetitiveRank getRankName() {
+        return rankName;
+    }
+
+    /**
+     * Get minimum points required for this rank
+     */
+    public Integer getMinimumPoints() {
+        return minimumPoints;
+    }
+
+    /**
+     * Check if given points qualify for this rank
+     */
+    public boolean qualifiesForRank(Integer points) {
+        return points >= minimumPoints;
+    }
+
+    /**
+     * Get the next rank in progression
+     */
+    public CompetitiveRank getNextRank() {
+        return rankName.getNextRank();
+    }
+
+    /**
+     * Get points needed for next rank
+     */
+    public int getPointsNeededForNextRank(int currentPoints) {
+        return rankName.getPointsNeededForNextRank(currentPoints);
+    }
+
+    /**
+     * Get the entity ID
+     */
+    public String getId() {
+        return id;
+    }
+
+    /**
+     * Get created date
+     */
+    public Date getCreatedAt() {
+        return createdAt;
+    }
+
+    /**
+     * Get last modified date
+     */
+    public Date getUpdatedAt() {
+        return updatedAt;
+    }
+}
