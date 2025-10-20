@@ -3,9 +3,7 @@ package com.levelup.journey.platform.microserviceprofiles.competitive.domain.mod
 import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.commands.CreateCompetitiveProfileCommand;
 import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.commands.UpdateCompetitivePointsCommand;
 import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.entities.Rank;
-import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.valueobjects.CompetitiveRank;
 import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.valueobjects.CompetitiveUserId;
-import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.valueobjects.LeaderboardPosition;
 import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.valueobjects.TotalPoints;
 import com.levelup.journey.platform.microserviceprofiles.shared.domain.model.aggregates.AuditableAbstractAggregateRoot;
 import jakarta.persistence.*;
@@ -34,12 +32,6 @@ public class CompetitiveProfile extends AuditableAbstractAggregateRoot<Competiti
     @JoinColumn(name = "rank_id", nullable = false)
     private Rank currentRank;
 
-    @Embedded
-    @AttributeOverrides({
-            @AttributeOverride(name = "position", column = @Column(name = "leaderboard_position"))
-    })
-    private LeaderboardPosition leaderboardPosition;
-
     protected CompetitiveProfile() {
         // JPA constructor
     }
@@ -55,7 +47,6 @@ public class CompetitiveProfile extends AuditableAbstractAggregateRoot<Competiti
         this.userId = new CompetitiveUserId(command.userId());
         this.totalPoints = TotalPoints.zero();
         this.currentRank = bronzeRank;
-        this.leaderboardPosition = null; // Will be set during leaderboard calculation
     }
 
     /**
@@ -69,7 +60,6 @@ public class CompetitiveProfile extends AuditableAbstractAggregateRoot<Competiti
         this.userId = new CompetitiveUserId(userId);
         this.totalPoints = new TotalPoints(initialPoints);
         this.currentRank = initialRank;
-        this.leaderboardPosition = null;
     }
 
     /**
@@ -95,36 +85,12 @@ public class CompetitiveProfile extends AuditableAbstractAggregateRoot<Competiti
     }
 
     /**
-     * Update leaderboard position and potentially grant TOP500 rank
-     *
-     * @param position New leaderboard position
-     * @param top500Rank The TOP500 rank entity (if applicable)
-     */
-    public void updateLeaderboardPosition(LeaderboardPosition position, Rank top500Rank) {
-        this.leaderboardPosition = position;
-
-        // Grant TOP500 rank if position qualifies
-        if (position.isTop500() && top500Rank != null) {
-            this.currentRank = top500Rank;
-        }
-    }
-
-    /**
      * Update rank entity
      *
      * @param rank The new rank entity
      */
     public void updateRank(Rank rank) {
         this.currentRank = rank;
-    }
-
-    /**
-     * Check if profile qualifies for TOP500
-     *
-     * @return true if current rank is TOP500
-     */
-    public boolean isTop500() {
-        return this.currentRank.getRankName() == CompetitiveRank.TOP500;
     }
 
     // Getters
@@ -143,9 +109,5 @@ public class CompetitiveProfile extends AuditableAbstractAggregateRoot<Competiti
 
     public String getCurrentRankName() {
         return currentRank.getRankName().name();
-    }
-
-    public Integer getLeaderboardPosition() {
-        return leaderboardPosition != null ? leaderboardPosition.position() : null;
     }
 }

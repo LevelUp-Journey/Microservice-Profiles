@@ -26,10 +26,8 @@ public class CompetitiveProfileResourceFromEntityAssembler {
                 entity.getUserId(),
                 entity.getTotalPoints(),
                 currentRankEnum.name(),
-                entity.getLeaderboardPosition(),
                 nextRank != null ? nextRank.name() : null,
-                pointsNeeded,
-                entity.isTop500()
+                pointsNeeded
         );
     }
 }

@@ -3,12 +3,10 @@ package com.levelup.journey.platform.microserviceprofiles.competitive.applicatio
 import com.levelup.journey.platform.microserviceprofiles.competitive.application.internal.outboundservices.acl.ExternalScoresService;
 import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.aggregates.CompetitiveProfile;
 import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.commands.CreateCompetitiveProfileCommand;
-import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.commands.RecalculateLeaderboardPositionsCommand;
 import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.commands.SyncCompetitiveProfileFromScoresCommand;
 import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.commands.UpdateCompetitivePointsCommand;
 import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.valueobjects.CompetitiveRank;
 import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.valueobjects.CompetitiveUserId;
-import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.valueobjects.LeaderboardPosition;
 import com.levelup.journey.platform.microserviceprofiles.competitive.domain.services.CompetitiveProfileCommandService;
 import com.levelup.journey.platform.microserviceprofiles.competitive.infrastructure.persistence.jpa.repositories.CompetitiveProfileRepository;
 import com.levelup.journey.platform.microserviceprofiles.competitive.infrastructure.persistence.jpa.repositories.RankRepository;
@@ -17,7 +15,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.Optional;
 
 /**
@@ -133,35 +130,5 @@ public class CompetitiveProfileCommandServiceImpl implements CompetitiveProfileC
                 command.userId(), totalPoints.get(), savedProfile.getCurrentRank().getRankName());
 
         return Optional.of(savedProfile);
-    }
-
-    @Override
-    @Transactional
-    public Integer handle(RecalculateLeaderboardPositionsCommand command) {
-        logger.info("Starting leaderboard position recalculation");
-
-        // Get TOP500 rank for position-based rank assignment
-        var top500Rank = rankRepository.findByRankName(CompetitiveRank.TOP500)
-                .orElseThrow(() -> new IllegalStateException("TOP500 rank not found in database"));
-
-        // Get all profiles ordered by points (descending)
-        List<CompetitiveProfile> allProfiles = competitiveProfileRepository.findAllOrderedByTotalPoints();
-
-        int updatedCount = 0;
-        int position = 1;
-
-        for (CompetitiveProfile profile : allProfiles) {
-            LeaderboardPosition newPosition = new LeaderboardPosition(position);
-
-            // Update leaderboard position (this also handles TOP500 rank assignment for top 500)
-            profile.updateLeaderboardPosition(newPosition, top500Rank);
-
-            competitiveProfileRepository.save(profile);
-            updatedCount++;
-            position++;
-        }
-
-        logger.info("Leaderboard recalculation completed. Updated {} profiles", updatedCount);
-        return updatedCount;
     }
 }

@@ -2,7 +2,6 @@ package com.levelup.journey.platform.microserviceprofiles.competitive.domain.ser
 
 import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.aggregates.CompetitiveProfile;
 import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.commands.CreateCompetitiveProfileCommand;
-import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.commands.RecalculateLeaderboardPositionsCommand;
 import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.commands.SyncCompetitiveProfileFromScoresCommand;
 import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.commands.UpdateCompetitivePointsCommand;
 
@@ -40,13 +39,4 @@ public interface CompetitiveProfileCommandService {
      * @return Optional of synchronized {@link CompetitiveProfile}
      */
     Optional<CompetitiveProfile> handle(SyncCompetitiveProfileFromScoresCommand command);
-
-    /**
-     * Handle Recalculate Leaderboard Positions Command
-     * Recalculates all leaderboard positions and TOP500 designations
-     *
-     * @param command The {@link RecalculateLeaderboardPositionsCommand}
-     * @return Number of profiles updated
-     */
-    Integer handle(RecalculateLeaderboardPositionsCommand command);
 }

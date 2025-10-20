@@ -11,8 +11,7 @@ public enum CompetitiveRank {
     PLATINUM(3000),
     DIAMOND(5000),
     MASTER(7500),
-    GRANDMASTER(10000),
-    TOP500(Integer.MAX_VALUE); // Special rank for top 500 users
+    GRANDMASTER(10000);
 
     private final int minimumPoints;
 
@@ -59,7 +58,7 @@ public enum CompetitiveRank {
             case PLATINUM -> DIAMOND;
             case DIAMOND -> MASTER;
             case MASTER -> GRANDMASTER;
-            case GRANDMASTER, TOP500 -> null;
+            case GRANDMASTER -> null;
         };
     }
 

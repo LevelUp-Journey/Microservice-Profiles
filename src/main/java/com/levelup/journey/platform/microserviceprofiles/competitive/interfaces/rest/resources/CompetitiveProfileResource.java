@@ -20,16 +20,10 @@ public record CompetitiveProfileResource(
         @Schema(description = "Current competitive rank", example = "DIAMOND")
         String currentRank,
 
-        @Schema(description = "Position in global leaderboard", example = "42", nullable = true)
-        Integer leaderboardPosition,
-
         @Schema(description = "Next rank in progression", example = "MASTER", nullable = true)
         String nextRank,
 
         @Schema(description = "Points needed to reach next rank", example = "2080")
-        Integer pointsNeededForNextRank,
-
-        @Schema(description = "Whether user is in TOP500", example = "false")
-        Boolean isTop500
+        Integer pointsNeededForNextRank
 ) {
 }
