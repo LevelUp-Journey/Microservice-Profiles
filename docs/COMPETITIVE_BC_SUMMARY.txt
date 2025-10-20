@@ -1,0 +1,263 @@
+================================================================================
+COMPETITIVE BOUNDED CONTEXT - ANALYSIS SUMMARY
+================================================================================
+
+TOTAL FILES: 40 Java files across 24 directories
+
+================================================================================
+1. CRITICAL ISSUE: LEADERBOARD FUNCTIONALITY IN WRONG BC
+================================================================================
+
+The Competitive BC currently contains significant leaderboard functionality 
+that should be in a separate Leaderboard BC.
+
+FILES THAT SHOULD NOT BE HERE (13):
+  1. LeaderboardPosition.java (value object)
+  2. RecalculateLeaderboardPositionsCommand.java (command)
+  3. GetLeaderboardQuery.java (query)
+  4. GetUserRankingPositionQuery.java (query)
+  5. LeaderboardEntryResource.java (REST DTO)
+  6. UserRankingPositionResource.java (REST DTO)
+  7. LeaderboardEntryResourceFromEntityAssembler.java (transformer)
+  8. UserRankingPositionResourceFromEntityAssembler.java (transformer)
+  9. RankCommandService.java (domain service)
+  10. RankQueryService.java (domain service)
+  11. RankCommandServiceImpl.java (app service)
+  12. RankQueryServiceImpl.java (app service)
+  13. RankResource.java (REST DTO)
+
+CODE SECTIONS TO REMOVE FROM EXISTING FILES:
+  - CompetitiveProfile.java: Remove leaderboardPosition field & related methods
+  - CompetitiveRank.java: Remove TOP500 enum value
+  - CompetitiveProfileCommandServiceImpl.java: Remove RecalculateLeaderboard handler
+  - CompetitiveProfileQueryServiceImpl.java: Remove Leaderboard & Position handlers
+  - CompetitiveProfilesController.java: Remove leaderboard endpoints
+  - CompetitiveProfileRepository.java: Remove leaderboard-specific queries
+  - RankRepository.java: Remove findRankByPoints() method
+
+================================================================================
+2. CURRENT RESPONSIBILITIES
+================================================================================
+
+CORE COMPETENCIES (KEEP):
+  - Manage user competitive profiles
+  - Track total points
+  - Rank progression (BRONZE → SILVER → GOLD → PLATINUM → DIAMOND → MASTER → GRANDMASTER)
+  - Synchronize with Scores BC
+  - Seed rank reference data
+
+MISPLACED RESPONSIBILITIES (MOVE TO LEADERBOARD BC):
+  - Calculate leaderboard positions
+  - Assign TOP500 rank
+  - Retrieve global leaderboard
+  - Calculate user ranking positions
+  - Recalculate all leaderboard rankings
+
+================================================================================
+3. DDD STRUCTURE VIOLATIONS
+================================================================================
+
+ISSUE: Rank Entity Treated as Full Aggregate
+  Problem: Rank is immutable reference data, not an aggregate root
+  Current: Has separate RankCommandService and RankQueryService
+  Solution: Simplify to infrastructure lookup or single RankLookupService
+
+ISSUE: Mixed Concerns in CompetitiveProfile
+  Problem: Aggregate stores and manages leaderboard position
+  Solution: Remove leaderboard position; it's Leaderboard BC responsibility
+
+ISSUE: Over-engineered Reference Data
+  Problem: Using command/query pattern for static reference data
+  Solution: Direct repository access or simple lookup service
+
+================================================================================
+4. BOUNDED CONTEXT SEPARATION VIOLATIONS
+================================================================================
+
+TOP 5 CRITICAL VIOLATIONS:
+
+1. TOP500 Rank in CompetitiveRank Enum
+   - TOP500 is a leaderboard concept, not a competitive rank
+   - Should only exist in Leaderboard BC
+   - Impact: HIGH
+
+2. LeaderboardPosition Value Object
+   - Used to calculate positions and determine TOP500 qualification
+   - 100% leaderboard responsibility
+   - Impact: HIGH
+
+3. Leaderboard Query/Position Retrieval
+   - GetLeaderboardQuery, GetUserRankingPositionQuery are leaderboard operations
+   - Should be in Leaderboard BC service
+   - Impact: HIGH
+
+4. Leaderboard REST Endpoints
+   - /leaderboard, /user/{userId}/position, /leaderboard/recalculate
+   - Should be in separate Leaderboard controller
+   - Impact: MEDIUM
+
+5. Leaderboard Repository Queries
+   - findTopByOrderByTotalPointsDesc(), countProfilesWithMorePoints()
+   - These are leaderboard calculations, not profile queries
+   - Impact: MEDIUM
+
+================================================================================
+5. WHAT TO KEEP IN COMPETITIVE BC
+================================================================================
+
+DOMAIN MODEL (keep):
+  - CompetitiveProfile aggregate (refined)
+  - CompetitiveRank enum (7 ranks only, no TOP500)
+  - CompetitiveUserId value object
+  - TotalPoints value object
+  - Rank entity (simplified as reference data)
+
+COMMANDS (keep):
+  - CreateCompetitiveProfileCommand
+  - UpdateCompetitivePointsCommand
+  - SyncCompetitiveProfileFromScoresCommand
+
+QUERIES (keep):
+  - GetCompetitiveProfileByUserIdQuery
+  - GetUsersByRankQuery
+  - GetAllCompetitiveProfilesQuery
+
+SERVICES (keep):
+  - CompetitiveProfileCommandService/Impl
+  - CompetitiveProfileQueryService/Impl
+
+REST ENDPOINTS (keep):
+  - GET /api/v1/competitive/profiles/user/{userId}
+  - POST /api/v1/competitive/profiles/user/{userId}/sync
+  - GET /api/v1/competitive/profiles/rank/{rank}
+
+EVENT HANDLING (keep):
+  - ScoreUpdatedEventHandler (sync profiles when scores change)
+  - ApplicationReadyEventHandler (seed rank data)
+
+INFRASTRUCTURE (keep):
+  - CompetitiveProfileRepository (refined)
+  - ExternalScoresService (ACL to Scores BC)
+
+================================================================================
+6. WHAT TO DELETE FROM COMPETITIVE BC (13 FILES)
+================================================================================
+
+Domain Model:
+  1. /competitive/domain/model/valueobjects/LeaderboardPosition.java
+  2. /competitive/domain/model/commands/RecalculateLeaderboardPositionsCommand.java
+  3. /competitive/domain/model/queries/GetLeaderboardQuery.java
+  4. /competitive/domain/model/queries/GetUserRankingPositionQuery.java
+  5. /competitive/domain/services/RankCommandService.java
+  6. /competitive/domain/services/RankQueryService.java
+
+Application Layer:
+  7. /competitive/application/internal/commandservices/RankCommandServiceImpl.java
+  8. /competitive/application/internal/queryservices/RankQueryServiceImpl.java
+
+REST Layer:
+  9. /competitive/interfaces/rest/resources/LeaderboardEntryResource.java
+  10. /competitive/interfaces/rest/resources/UserRankingPositionResource.java
+  11. /competitive/interfaces/rest/resources/RankResource.java
+  12. /competitive/interfaces/rest/transform/LeaderboardEntryResourceFromEntityAssembler.java
+  13. /competitive/interfaces/rest/transform/UserRankingPositionResourceFromEntityAssembler.java
+
+================================================================================
+7. CODE MODIFICATIONS REQUIRED (14 LOCATIONS)
+================================================================================
+
+File: CompetitiveProfile.java
+  - REMOVE: leaderboardPosition field (line 41)
+  - REMOVE: updateLeaderboardPosition() method (lines 103-110)
+  - REMOVE: isTop500() method (lines 126-128)
+  - REMOVE: getLeaderboardPosition() method (lines 148-150)
+
+File: CompetitiveRank.java
+  - REMOVE: TOP500(Integer.MAX_VALUE) enum value (line 15)
+
+File: CompetitiveProfileCommandServiceImpl.java
+  - REMOVE: handle(RecalculateLeaderboardPositionsCommand) method (lines 140-166)
+
+File: CompetitiveProfileQueryServiceImpl.java
+  - REMOVE: handle(GetLeaderboardQuery) method (lines 55-64)
+  - REMOVE: handle(GetUserRankingPositionQuery) method (lines 80-108)
+
+File: CompetitiveProfilesController.java
+  - REMOVE: getLeaderboard() endpoint (lines 82-96)
+  - REMOVE: getUserRankingPosition() endpoint (lines 107-129)
+  - REMOVE: recalculateLeaderboard() endpoint (lines 192-197)
+
+File: CompetitiveProfileRepository.java
+  - REMOVE: findTopByOrderByTotalPointsDesc() (lines 53-54)
+  - REMOVE: findAllOrderedByTotalPoints() (lines 61-62)
+  - REMOVE: countProfilesWithMorePoints() (lines 80-81)
+  - REMOVE: countProfilesWithSamePointsButEarlier() (lines 91-92)
+  - REMOVE: findTop500Profiles() (lines 100-101)
+
+File: RankRepository.java
+  - REMOVE: findRankByPoints() method (line 42)
+
+================================================================================
+8. RECOMMENDED NEXT STEPS
+================================================================================
+
+PRIORITY 1 - Extract Leaderboard BC:
+  1. Create Leaderboard BC directory structure
+  2. Copy LeaderboardPosition to Leaderboard BC
+  3. Create LeaderboardRecalculateCommand
+  4. Create Leaderboard queries (GetLeaderboard, GetUserRankingPosition)
+  5. Implement LeaderboardCommandService and LeaderboardQueryService
+  6. Create Leaderboard REST controller
+  7. Create Leaderboard resources and assemblers
+
+PRIORITY 2 - Create Inter-BC Communication:
+  1. Create ACL interface: CompetitiveProfileLeaderboardFacade
+  2. Publish CompetitiveProfileUpdatedEvent from Competitive BC
+  3. Create event handler in Leaderboard BC to recalculate positions
+
+PRIORITY 3 - Refactor Competitive BC:
+  1. Remove leaderboard code (delete 13 files)
+  2. Modify 8 existing files (remove leaderboard code)
+  3. Remove TOP500 from CompetitiveRank enum
+  4. Remove leaderboard position from CompetitiveProfile aggregate
+  5. Simplify RankCommandService to RankLookupService
+
+PRIORITY 4 - Simplify Rank Reference Data:
+  1. Delete RankCommandService/Impl and RankQueryService/Impl
+  2. Create RankReferenceDataService in infrastructure layer
+  3. Move seeding logic to infrastructure initializer
+  4. Update ApplicationReadyEventHandler to use new service
+
+PRIORITY 5 - Testing & Integration:
+  1. Update all unit tests
+  2. Create integration tests for inter-BC communication
+  3. Verify all endpoints work correctly
+  4. Test leaderboard recalculation workflow
+
+================================================================================
+9. FILE COUNT AFTER REFACTORING
+================================================================================
+
+Current: 40 files
+After cleanup: 27 files (-13 deleted)
+
+Breakdown:
+  Domain Model: 9 files (was 13)
+  Application: 4 files (was 6)
+  Infrastructure: 3 files (was 3)
+  Interfaces: 5 files (was 10)
+
+================================================================================
+10. ARCHITECTURE IMPROVEMENTS
+================================================================================
+
+BEFORE (Mixed Concerns):
+  Competitive BC: Profiles + Rankings + Leaderboard + Reference Data
+
+AFTER (Clean Separation):
+  Competitive BC: User competitive profiles, rank progression
+  Leaderboard BC: Global rankings, position calculations, TOP500
+  Scores BC: Score recording and accumulation
+  Profiles BC: User profile management
+
+================================================================================

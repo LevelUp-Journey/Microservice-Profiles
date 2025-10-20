@@ -1,0 +1,237 @@
+================================================================================
+COMPETITIVE BC - COMPLETE FILE MAPPING WITH ABSOLUTE PATHS
+================================================================================
+
+BASE PATH: /home/giks/Documentos/LevelUp-Journey/Profiles/src/main/java/com/levelup/journey/platform/microserviceprofiles/competitive
+
+================================================================================
+DOMAIN MODEL LAYER
+================================================================================
+
+VALUE OBJECTS (4 files - 3 to keep, 1 to delete):
+
+KEEP:
+  1. domain/model/valueobjects/CompetitiveUserId.java
+  2. domain/model/valueobjects/TotalPoints.java
+  3. domain/model/valueobjects/CompetitiveRank.java (remove TOP500 enum value)
+
+DELETE:
+  1. domain/model/valueobjects/LeaderboardPosition.java
+
+ENTITIES (1 file - keep with modifications):
+
+KEEP (simplified):
+  1. domain/model/entities/Rank.java
+
+AGGREGATES (1 file - keep with modifications):
+
+KEEP (remove leaderboard fields/methods):
+  1. domain/model/aggregates/CompetitiveProfile.java
+
+COMMANDS (5 files - 3 to keep, 2 to delete):
+
+KEEP:
+  1. domain/model/commands/CreateCompetitiveProfileCommand.java
+  2. domain/model/commands/UpdateCompetitivePointsCommand.java
+  3. domain/model/commands/SyncCompetitiveProfileFromScoresCommand.java
+
+DELETE:
+  1. domain/model/commands/RecalculateLeaderboardPositionsCommand.java
+
+KEEP FOR NOW (can delete later when simplifying rank reference data):
+  1. domain/model/commands/SeedRanksCommand.java
+
+QUERIES (5 files - 3 to keep, 2 to delete):
+
+KEEP:
+  1. domain/model/queries/GetCompetitiveProfileByUserIdQuery.java
+  2. domain/model/queries/GetUsersByRankQuery.java
+  3. domain/model/queries/GetAllCompetitiveProfilesQuery.java
+
+DELETE:
+  1. domain/model/queries/GetLeaderboardQuery.java
+  2. domain/model/queries/GetUserRankingPositionQuery.java
+
+DOMAIN SERVICES (4 files - 2 to keep, 2 to delete):
+
+KEEP:
+  1. domain/services/CompetitiveProfileCommandService.java
+  2. domain/services/CompetitiveProfileQueryService.java
+
+DELETE:
+  1. domain/services/RankCommandService.java
+  2. domain/services/RankQueryService.java
+
+================================================================================
+APPLICATION LAYER
+================================================================================
+
+COMMAND SERVICES (2 files - 1 to keep, 1 to delete/simplify):
+
+KEEP (remove RecalculateLeaderboard handler):
+  1. application/internal/commandservices/CompetitiveProfileCommandServiceImpl.java
+
+DELETE (move to infrastructure or keep simplified):
+  1. application/internal/commandservices/RankCommandServiceImpl.java
+
+QUERY SERVICES (2 files - 1 to keep, 1 to delete/simplify):
+
+KEEP (remove Leaderboard and UserRankingPosition handlers):
+  1. application/internal/queryservices/CompetitiveProfileQueryServiceImpl.java
+
+DELETE (move to infrastructure or keep simplified):
+  1. application/internal/queryservices/RankQueryServiceImpl.java
+
+EVENT HANDLERS (2 files - keep all):
+
+KEEP:
+  1. application/internal/eventhandlers/ApplicationReadyEventHandler.java
+  2. application/internal/eventhandlers/ScoreUpdatedEventHandler.java
+
+ACL / EXTERNAL SERVICES (1 file - keep):
+
+KEEP:
+  1. application/internal/outboundservices/acl/ExternalScoresService.java
+
+================================================================================
+INFRASTRUCTURE LAYER
+================================================================================
+
+REPOSITORIES (2 files - both to keep with modifications):
+
+KEEP (remove leaderboard queries):
+  1. infrastructure/persistence/jpa/repositories/CompetitiveProfileRepository.java
+
+KEEP (remove findRankByPoints method):
+  1. infrastructure/persistence/jpa/repositories/RankRepository.java
+
+================================================================================
+INTERFACES LAYER
+================================================================================
+
+REST CONTROLLER (1 file - keep with modifications):
+
+KEEP (remove leaderboard endpoints):
+  1. interfaces/rest/CompetitiveProfilesController.java
+
+REST RESOURCES (5 files - 2 to keep, 3 to delete):
+
+KEEP:
+  1. interfaces/rest/resources/CompetitiveProfileResource.java
+  2. interfaces/rest/resources/CreateCompetitiveProfileResource.java
+
+DELETE:
+  1. interfaces/rest/resources/LeaderboardEntryResource.java
+  2. interfaces/rest/resources/UserRankingPositionResource.java
+  3. interfaces/rest/resources/RankResource.java
+
+ASSEMBLERS/TRANSFORMERS (5 files - 3 to keep, 2 to delete):
+
+KEEP:
+  1. interfaces/rest/transform/CompetitiveProfileResourceFromEntityAssembler.java
+  2. interfaces/rest/transform/CreateCompetitiveProfileCommandFromResourceAssembler.java
+  3. interfaces/rest/transform/RankResourceFromEntityAssembler.java (can delete with RankResource)
+
+DELETE:
+  1. interfaces/rest/transform/LeaderboardEntryResourceFromEntityAssembler.java
+  2. interfaces/rest/transform/UserRankingPositionResourceFromEntityAssembler.java
+
+================================================================================
+SUMMARY BY ACTION
+================================================================================
+
+FILES TO DELETE (13):
+  1. domain/model/valueobjects/LeaderboardPosition.java
+  2. domain/model/commands/RecalculateLeaderboardPositionsCommand.java
+  3. domain/model/queries/GetLeaderboardQuery.java
+  4. domain/model/queries/GetUserRankingPositionQuery.java
+  5. domain/services/RankCommandService.java
+  6. domain/services/RankQueryService.java
+  7. application/internal/commandservices/RankCommandServiceImpl.java
+  8. application/internal/queryservices/RankQueryServiceImpl.java
+  9. interfaces/rest/resources/LeaderboardEntryResource.java
+  10. interfaces/rest/resources/UserRankingPositionResource.java
+  11. interfaces/rest/resources/RankResource.java
+  12. interfaces/rest/transform/LeaderboardEntryResourceFromEntityAssembler.java
+  13. interfaces/rest/transform/UserRankingPositionResourceFromEntityAssembler.java
+
+FILES TO MODIFY (8):
+  1. domain/model/aggregates/CompetitiveProfile.java
+  2. domain/model/valueobjects/CompetitiveRank.java
+  3. application/internal/commandservices/CompetitiveProfileCommandServiceImpl.java
+  4. application/internal/queryservices/CompetitiveProfileQueryServiceImpl.java
+  5. interfaces/rest/CompetitiveProfilesController.java
+  6. infrastructure/persistence/jpa/repositories/CompetitiveProfileRepository.java
+  7. infrastructure/persistence/jpa/repositories/RankRepository.java
+  8. domain/model/entities/Rank.java
+
+FILES TO KEEP AS-IS (19):
+  1. domain/model/valueobjects/CompetitiveUserId.java
+  2. domain/model/valueobjects/TotalPoints.java
+  3. domain/model/commands/CreateCompetitiveProfileCommand.java
+  4. domain/model/commands/UpdateCompetitivePointsCommand.java
+  5. domain/model/commands/SyncCompetitiveProfileFromScoresCommand.java
+  6. domain/model/commands/SeedRanksCommand.java
+  7. domain/model/queries/GetCompetitiveProfileByUserIdQuery.java
+  8. domain/model/queries/GetUsersByRankQuery.java
+  9. domain/model/queries/GetAllCompetitiveProfilesQuery.java
+  10. domain/services/CompetitiveProfileCommandService.java
+  11. domain/services/CompetitiveProfileQueryService.java
+  12. application/internal/eventhandlers/ApplicationReadyEventHandler.java
+  13. application/internal/eventhandlers/ScoreUpdatedEventHandler.java
+  14. application/internal/outboundservices/acl/ExternalScoresService.java
+  15. interfaces/rest/resources/CompetitiveProfileResource.java
+  16. interfaces/rest/resources/CreateCompetitiveProfileResource.java
+  17. interfaces/rest/transform/CompetitiveProfileResourceFromEntityAssembler.java
+  18. interfaces/rest/transform/CreateCompetitiveProfileCommandFromResourceAssembler.java
+  19. interfaces/rest/transform/RankResourceFromEntityAssembler.java
+
+================================================================================
+FULL ABSOLUTE PATHS
+================================================================================
+
+DELETE THESE (13 FILES):
+1. /home/giks/Documentos/LevelUp-Journey/Profiles/src/main/java/com/levelup/journey/platform/microserviceprofiles/competitive/domain/model/valueobjects/LeaderboardPosition.java
+
+2. /home/giks/Documentos/LevelUp-Journey/Profiles/src/main/java/com/levelup/journey/platform/microserviceprofiles/competitive/domain/model/commands/RecalculateLeaderboardPositionsCommand.java
+
+3. /home/giks/Documentos/LevelUp-Journey/Profiles/src/main/java/com/levelup/journey/platform/microserviceprofiles/competitive/domain/model/queries/GetLeaderboardQuery.java
+
+4. /home/giks/Documentos/LevelUp-Journey/Profiles/src/main/java/com/levelup/journey/platform/microserviceprofiles/competitive/domain/model/queries/GetUserRankingPositionQuery.java
+
+5. /home/giks/Documentos/LevelUp-Journey/Profiles/src/main/java/com/levelup/journey/platform/microserviceprofiles/competitive/domain/services/RankCommandService.java
+
+6. /home/giks/Documentos/LevelUp-Journey/Profiles/src/main/java/com/levelup/journey/platform/microserviceprofiles/competitive/domain/services/RankQueryService.java
+
+7. /home/giks/Documentos/LevelUp-Journey/Profiles/src/main/java/com/levelup/journey/platform/microserviceprofiles/competitive/application/internal/commandservices/RankCommandServiceImpl.java
+
+8. /home/giks/Documentos/LevelUp-Journey/Profiles/src/main/java/com/levelup/journey/platform/microserviceprofiles/competitive/application/internal/queryservices/RankQueryServiceImpl.java
+
+9. /home/giks/Documentos/LevelUp-Journey/Profiles/src/main/java/com/levelup/journey/platform/microserviceprofiles/competitive/interfaces/rest/resources/LeaderboardEntryResource.java
+
+10. /home/giks/Documentos/LevelUp-Journey/Profiles/src/main/java/com/levelup/journey/platform/microserviceprofiles/competitive/interfaces/rest/resources/UserRankingPositionResource.java
+
+11. /home/giks/Documentos/LevelUp-Journey/Profiles/src/main/java/com/levelup/journey/platform/microserviceprofiles/competitive/interfaces/rest/resources/RankResource.java
+
+12. /home/giks/Documentos/LevelUp-Journey/Profiles/src/main/java/com/levelup/journey/platform/microserviceprofiles/competitive/interfaces/rest/transform/LeaderboardEntryResourceFromEntityAssembler.java
+
+13. /home/giks/Documentos/LevelUp-Journey/Profiles/src/main/java/com/levelup/journey/platform/microserviceprofiles/competitive/interfaces/rest/transform/UserRankingPositionResourceFromEntityAssembler.java
+
+MODIFY THESE (8 FILES):
+1. /home/giks/Documentos/LevelUp-Journey/Profiles/src/main/java/com/levelup/journey/platform/microserviceprofiles/competitive/domain/model/aggregates/CompetitiveProfile.java
+
+2. /home/giks/Documentos/LevelUp-Journey/Profiles/src/main/java/com/levelup/journey/platform/microserviceprofiles/competitive/domain/model/valueobjects/CompetitiveRank.java
+
+3. /home/giks/Documentos/LevelUp-Journey/Profiles/src/main/java/com/levelup/journey/platform/microserviceprofiles/competitive/application/internal/commandservices/CompetitiveProfileCommandServiceImpl.java
+
+4. /home/giks/Documentos/LevelUp-Journey/Profiles/src/main/java/com/levelup/journey/platform/microserviceprofiles/competitive/application/internal/queryservices/CompetitiveProfileQueryServiceImpl.java
+
+5. /home/giks/Documentos/LevelUp-Journey/Profiles/src/main/java/com/levelup/journey/platform/microserviceprofiles/competitive/interfaces/rest/CompetitiveProfilesController.java
+
+6. /home/giks/Documentos/LevelUp-Journey/Profiles/src/main/java/com/levelup/journey/platform/microserviceprofiles/competitive/infrastructure/persistence/jpa/repositories/CompetitiveProfileRepository.java
+
+7. /home/giks/Documentos/LevelUp-Journey/Profiles/src/main/java/com/levelup/journey/platform/microserviceprofiles/competitive/infrastructure/persistence/jpa/repositories/RankRepository.java
+
+8. /home/giks/Documentos/LevelUp-Journey/Profiles/src/main/java/com/levelup/journey/platform/microserviceprofiles/competitive/domain/model/entities/Rank.java
+
+================================================================================
