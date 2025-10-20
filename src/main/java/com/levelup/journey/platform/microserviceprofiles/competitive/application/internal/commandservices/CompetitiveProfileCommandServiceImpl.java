@@ -6,12 +6,10 @@ import com.levelup.journey.platform.microserviceprofiles.competitive.domain.mode
 import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.commands.RecalculateLeaderboardPositionsCommand;
 import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.commands.SyncCompetitiveProfileFromScoresCommand;
 import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.commands.UpdateCompetitivePointsCommand;
-import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.valueobjects.CompetitiveRank;
 import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.valueobjects.CompetitiveUserId;
 import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.valueobjects.LeaderboardPosition;
 import com.levelup.journey.platform.microserviceprofiles.competitive.domain.services.CompetitiveProfileCommandService;
 import com.levelup.journey.platform.microserviceprofiles.competitive.infrastructure.persistence.jpa.repositories.CompetitiveProfileRepository;
-import com.levelup.journey.platform.microserviceprofiles.competitive.infrastructure.persistence.jpa.repositories.RankRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -29,15 +27,12 @@ public class CompetitiveProfileCommandServiceImpl implements CompetitiveProfileC
 
     private static final Logger logger = LoggerFactory.getLogger(CompetitiveProfileCommandServiceImpl.class);
     private final CompetitiveProfileRepository competitiveProfileRepository;
-    private final RankRepository rankRepository;
     private final ExternalScoresService externalScoresService;
 
     public CompetitiveProfileCommandServiceImpl(
             CompetitiveProfileRepository competitiveProfileRepository,
-            RankRepository rankRepository,
             ExternalScoresService externalScoresService) {
         this.competitiveProfileRepository = competitiveProfileRepository;
-        this.rankRepository = rankRepository;
         this.externalScoresService = externalScoresService;
     }
 
@@ -56,17 +51,12 @@ public class CompetitiveProfileCommandServiceImpl implements CompetitiveProfileC
         var totalPoints = externalScoresService.fetchTotalPointsByUserId(command.userId())
                 .orElse(0);
 
-        // Get appropriate rank based on points
-        var rank = rankRepository.findRankByPoints(totalPoints)
-                .orElseGet(() -> rankRepository.findByRankName(CompetitiveRank.BRONZE)
-                        .orElseThrow(() -> new IllegalStateException("BRONZE rank not found in database")));
-
-        // Create competitive profile with fetched points and rank
-        var competitiveProfile = new CompetitiveProfile(command.userId(), totalPoints, rank);
+        // Create competitive profile with fetched points and calculated rank
+        var competitiveProfile = new CompetitiveProfile(command.userId(), totalPoints);
         var savedProfile = competitiveProfileRepository.save(competitiveProfile);
 
         logger.info("Created competitive profile for user {} with {} points and rank {}",
-                command.userId(), totalPoints, rank.getRankName());
+                command.userId(), totalPoints, competitiveProfile.getCurrentRank());
 
         return Optional.of(savedProfile);
     }
@@ -83,18 +73,13 @@ public class CompetitiveProfileCommandServiceImpl implements CompetitiveProfileC
             return Optional.empty();
         }
 
-        // Get appropriate rank based on new points
-        var newRank = rankRepository.findRankByPoints(command.newTotalPoints())
-                .orElseGet(() -> rankRepository.findByRankName(CompetitiveRank.BRONZE)
-                        .orElseThrow(() -> new IllegalStateException("BRONZE rank not found in database")));
-
         var competitiveProfile = profile.get();
-        competitiveProfile.updatePoints(command, newRank);
+        competitiveProfile.updatePoints(command);
 
         var updatedProfile = competitiveProfileRepository.save(competitiveProfile);
 
         logger.info("Updated competitive points for user {} to {} with rank {}",
-                command.userId(), command.newTotalPoints(), newRank.getRankName());
+                command.userId(), command.newTotalPoints(), updatedProfile.getCurrentRank());
 
         return Optional.of(updatedProfile);
     }
@@ -112,24 +97,19 @@ public class CompetitiveProfileCommandServiceImpl implements CompetitiveProfileC
             return Optional.empty();
         }
 
-        // Get appropriate rank based on points
-        var rank = rankRepository.findRankByPoints(totalPoints.get())
-                .orElseGet(() -> rankRepository.findByRankName(CompetitiveRank.BRONZE)
-                        .orElseThrow(() -> new IllegalStateException("BRONZE rank not found in database")));
-
         // Get or create competitive profile
         var profile = competitiveProfileRepository.findByUserId(userId)
                 .orElseGet(() -> {
                     logger.info("Creating new competitive profile during sync for user: {}", command.userId());
-                    return new CompetitiveProfile(command.userId(), totalPoints.get(), rank);
+                    return new CompetitiveProfile(command.userId(), totalPoints.get());
                 });
 
         // Sync points
-        profile.syncPointsFromScores(totalPoints.get(), rank);
+        profile.syncPointsFromScores(totalPoints.get());
         var savedProfile = competitiveProfileRepository.save(profile);
 
         logger.info("Synchronized competitive profile for user {} with {} points and rank {}",
-                command.userId(), totalPoints.get(), rank.getRankName());
+                command.userId(), totalPoints.get(), savedProfile.getCurrentRank());
 
         return Optional.of(savedProfile);
     }
@@ -142,10 +122,6 @@ public class CompetitiveProfileCommandServiceImpl implements CompetitiveProfileC
         // Get all profiles ordered by points (descending)
         List<CompetitiveProfile> allProfiles = competitiveProfileRepository.findAllOrderedByTotalPoints();
 
-        // Get TOP500 rank entity
-        var top500Rank = rankRepository.findByRankName(CompetitiveRank.TOP500)
-                .orElseThrow(() -> new IllegalStateException("TOP500 rank not found in database"));
-
         int updatedCount = 0;
         int position = 1;
 
@@ -153,15 +129,7 @@ public class CompetitiveProfileCommandServiceImpl implements CompetitiveProfileC
             LeaderboardPosition newPosition = new LeaderboardPosition(position);
 
             // Update leaderboard position (this also handles TOP500 rank assignment for top 500)
-            if (position <= 500) {
-                profile.updateLeaderboardPosition(newPosition, top500Rank);
-            } else {
-                // For users outside TOP500, update position but recalculate rank based on points
-                profile.updateLeaderboardPosition(newPosition, null);
-                var rankForPoints = rankRepository.findRankByPoints(profile.getTotalPoints())
-                        .orElseThrow(() -> new IllegalStateException("Rank not found for points: " + profile.getTotalPoints()));
-                profile.updateRank(rankForPoints);
-            }
+            profile.updateLeaderboardPosition(newPosition);
 
             competitiveProfileRepository.save(profile);
             updatedCount++;

@@ -10,11 +10,9 @@ import com.levelup.journey.platform.microserviceprofiles.competitive.domain.mode
 import com.levelup.journey.platform.microserviceprofiles.competitive.domain.services.CompetitiveProfileCommandService;
 import com.levelup.journey.platform.microserviceprofiles.competitive.domain.services.CompetitiveProfileQueryService;
 import com.levelup.journey.platform.microserviceprofiles.competitive.interfaces.rest.resources.CompetitiveProfileResource;
-import com.levelup.journey.platform.microserviceprofiles.competitive.interfaces.rest.resources.CreateCompetitiveProfileResource;
 import com.levelup.journey.platform.microserviceprofiles.competitive.interfaces.rest.resources.LeaderboardEntryResource;
 import com.levelup.journey.platform.microserviceprofiles.competitive.interfaces.rest.resources.UserRankingPositionResource;
 import com.levelup.journey.platform.microserviceprofiles.competitive.interfaces.rest.transform.CompetitiveProfileResourceFromEntityAssembler;
-import com.levelup.journey.platform.microserviceprofiles.competitive.interfaces.rest.transform.CreateCompetitiveProfileCommandFromResourceAssembler;
 import com.levelup.journey.platform.microserviceprofiles.competitive.interfaces.rest.transform.LeaderboardEntryResourceFromEntityAssembler;
 import com.levelup.journey.platform.microserviceprofiles.competitive.interfaces.rest.transform.UserRankingPositionResourceFromEntityAssembler;
 import io.swagger.v3.oas.annotations.Operation;
@@ -22,8 +20,6 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
