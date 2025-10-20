@@ -38,4 +38,19 @@ public interface ScoreRepository extends JpaRepository<Score, UUID> {
      * @return true if user has scores
      */
     boolean existsByUserId(ScoreUserId userId);
+
+    /**
+     * Get all user IDs and their total points
+     * @return List of Object arrays containing [userId, totalPoints]
+     */
+    @Query("SELECT s.userId.userId, SUM(s.points.value) FROM Score s GROUP BY s.userId.userId")
+    List<Object[]> findAllUserTotalPoints();
+
+    /**
+     * Get user IDs with total points greater than or equal to minimum
+     * @param minPoints Minimum points threshold
+     * @return List of user IDs meeting the criteria
+     */
+    @Query("SELECT s.userId.userId FROM Score s GROUP BY s.userId.userId HAVING SUM(s.points.value) >= :minPoints")
+    List<String> findUserIdsWithMinimumPoints(@Param("minPoints") Integer minPoints);
 }
