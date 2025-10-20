@@ -2,6 +2,7 @@ package com.levelup.journey.platform.microserviceprofiles.competitive.domain.ser
 
 import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.aggregates.CompetitiveProfile;
 import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.commands.CreateCompetitiveProfileCommand;
+import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.commands.SeedRanksCommand;
 import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.commands.SyncCompetitiveProfileFromScoresCommand;
 import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.commands.UpdateCompetitivePointsCommand;
 
@@ -39,4 +40,12 @@ public interface CompetitiveProfileCommandService {
      * @return Optional of synchronized {@link CompetitiveProfile}
      */
     Optional<CompetitiveProfile> handle(SyncCompetitiveProfileFromScoresCommand command);
+
+    /**
+     * Handle Seed Ranks Command
+     * Seeds the database with all competitive ranks
+     *
+     * @param command The {@link SeedRanksCommand}
+     */
+    void handle(SeedRanksCommand command);
 }

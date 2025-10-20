@@ -10,7 +10,7 @@ import java.util.Optional;
  * External Scores Service
  * ACL implementation for accessing Scores BC from Leaderboard BC
  */
-@Service
+@Service("leaderboardExternalScoresService")
 public class ExternalScoresService {
 
     private final ScoresContextFacade scoresContextFacade;

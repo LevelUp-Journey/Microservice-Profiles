@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service;
  * Score Updated Event Handler
  * Handles score update events from Scores BC to update leaderboard
  */
-@Service
+@Service("leaderboardScoreUpdatedEventHandler")
 public class ScoreUpdatedEventHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(ScoreUpdatedEventHandler.class);

@@ -3,8 +3,10 @@ package com.levelup.journey.platform.microserviceprofiles.competitive.applicatio
 import com.levelup.journey.platform.microserviceprofiles.competitive.application.internal.outboundservices.acl.ExternalScoresService;
 import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.aggregates.CompetitiveProfile;
 import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.commands.CreateCompetitiveProfileCommand;
+import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.commands.SeedRanksCommand;
 import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.commands.SyncCompetitiveProfileFromScoresCommand;
 import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.commands.UpdateCompetitivePointsCommand;
+import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.entities.Rank;
 import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.valueobjects.CompetitiveRank;
 import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.valueobjects.CompetitiveUserId;
 import com.levelup.journey.platform.microserviceprofiles.competitive.domain.services.CompetitiveProfileCommandService;
@@ -130,5 +132,34 @@ public class CompetitiveProfileCommandServiceImpl implements CompetitiveProfileC
                 command.userId(), totalPoints.get(), savedProfile.getCurrentRank().getRankName());
 
         return Optional.of(savedProfile);
+    }
+
+    @Override
+    @Transactional
+    public void handle(SeedRanksCommand command) {
+        logger.info("Starting rank seeding process");
+
+        int seededCount = 0;
+        int existingCount = 0;
+
+        // Iterate over all competitive ranks from the enum
+        for (CompetitiveRank competitiveRank : CompetitiveRank.values()) {
+            // Check if rank already exists
+            var existingRank = rankRepository.findByRankName(competitiveRank);
+
+            if (existingRank.isEmpty()) {
+                // Create new rank entity
+                var rank = new Rank(competitiveRank, competitiveRank.getMinimumPoints());
+                rankRepository.save(rank);
+                seededCount++;
+                logger.info("Seeded rank: {} with minimum points: {}",
+                        competitiveRank.name(), competitiveRank.getMinimumPoints());
+            } else {
+                existingCount++;
+                logger.debug("Rank {} already exists, skipping", competitiveRank.name());
+            }
+        }
+
+        logger.info("Rank seeding completed. Seeded: {}, Already existed: {}", seededCount, existingCount);
     }
 }

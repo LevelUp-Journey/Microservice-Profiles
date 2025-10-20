@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service;
  * Event handler that listens for score updates and synchronizes competitive profiles.
  * This implements the ACL pattern where Competitive BC consumes events from Scores BC.
  */
-@Service
+@Service("competitiveScoreUpdatedEventHandler")
 public class ScoreUpdatedEventHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(ScoreUpdatedEventHandler.class);

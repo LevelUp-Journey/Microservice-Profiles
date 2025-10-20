@@ -12,7 +12,7 @@ import java.util.Optional;
  * External Scores Service
  * ACL implementation for accessing score data from Scores bounded context
  */
-@Service
+@Service("competitiveExternalScoresService")
 public class ExternalScoresService {
 
     private static final Logger logger = LoggerFactory.getLogger(ExternalScoresService.class);

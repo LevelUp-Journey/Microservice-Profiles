@@ -5,6 +5,7 @@ import com.levelup.journey.platform.microserviceprofiles.leaderboard.domain.mode
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -59,4 +60,14 @@ public interface LeaderboardEntryRepository extends JpaRepository<LeaderboardEnt
      */
     @Query("SELECT le FROM LeaderboardEntry le ORDER BY le.totalPoints.points DESC, le.createdAt ASC")
     List<LeaderboardEntry> findTop500(Pageable pageable);
+
+    /**
+     * Count entries with points higher than given value
+     * Used for efficient position calculation
+     *
+     * @param points Points threshold
+     * @return Count of entries with higher points
+     */
+    @Query("SELECT COUNT(le) FROM LeaderboardEntry le WHERE le.totalPoints.points > :points")
+    Long countEntriesWithHigherPoints(@Param("points") Integer points);
 }

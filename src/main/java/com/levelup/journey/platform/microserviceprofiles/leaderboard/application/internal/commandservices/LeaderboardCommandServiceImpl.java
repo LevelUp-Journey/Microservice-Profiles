@@ -84,20 +84,11 @@ public class LeaderboardCommandServiceImpl implements LeaderboardCommandService 
 
     /**
      * Calculate position for a given points value
-     * Counts how many entries have more points
+     * Uses database query to count entries with higher points (O(1) complexity)
+     * Position = count of entries with more points + 1
      */
     private Integer calculatePosition(Integer points) {
-        var allEntries = leaderboardEntryRepository.findAllOrderedByPointsDesc();
-        int position = 1;
-
-        for (LeaderboardEntry entry : allEntries) {
-            if (entry.getTotalPoints() > points) {
-                position++;
-            } else {
-                break;
-            }
-        }
-
-        return position;
+        Long higherCount = leaderboardEntryRepository.countEntriesWithHigherPoints(points);
+        return higherCount.intValue() + 1;
     }
 }
