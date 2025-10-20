@@ -7,7 +7,6 @@ import com.levelup.journey.platform.microserviceprofiles.scores.domain.services.
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 
 /**
@@ -19,15 +18,12 @@ public class ChallengeCompletedEventListener {
     
     private static final Logger logger = LoggerFactory.getLogger(ChallengeCompletedEventListener.class);
     private final ScoreCommandService scoreCommandService;
-    private final KafkaTemplate<String, String> kafkaTemplate;
     private final ObjectMapper objectMapper;
 
     public ChallengeCompletedEventListener(
             ScoreCommandService scoreCommandService,
-            KafkaTemplate<String, String> kafkaTemplate,
             ObjectMapper objectMapper) {
         this.scoreCommandService = scoreCommandService;
-        this.kafkaTemplate = kafkaTemplate;
         this.objectMapper = objectMapper;
     }
 
@@ -42,11 +38,11 @@ public class ChallengeCompletedEventListener {
         try {
             // Parse JSON message
             JsonNode eventData = objectMapper.readTree(message);
-            
-            String userId = eventData.get("userId").asText();
+
+            String userId = eventData.get("studentId").asText();
             String challengeId = eventData.get("challengeId").asText();
-            String challengeType = eventData.get("challengeType").asText();
-            Integer points = eventData.get("points").asInt();
+            String challengeType = "CHALLENGE"; // Default type as it's not in the event
+            Integer points = eventData.get("experiencePointsEarned").asInt();
 
             // Create command
             var command = new RecordScoreFromChallengeCommand(
@@ -61,36 +57,12 @@ public class ChallengeCompletedEventListener {
 
             if (score.isPresent()) {
                 logger.info("Score recorded successfully for user: {} with points: {}", userId, points);
-                
-                // Publish score.points.awarded event
-                publishScorePointsAwardedEvent(score.get());
             } else {
                 logger.warn("Failed to record score for user: {}", userId);
             }
 
         } catch (Exception e) {
             logger.error("Error processing challenge completion event: {}", e.getMessage());
-        }
-    }
-
-    /**
-     * Publish score.points.awarded event to Kafka
-     */
-    private void publishScorePointsAwardedEvent(com.levelup.journey.platform.microserviceprofiles.scores.domain.model.aggregates.Score score) {
-        try {
-            String eventPayload = String.format(
-                    "{\"userId\":\"%s\",\"points\":%d,\"source\":\"%s\",\"challengeId\":\"%s\",\"timestamp\":\"%s\"}",
-                    score.getUserId(),
-                    score.getPoints(),
-                    score.getSource().name(),
-                    score.getChallengeId(),
-                    score.getCreatedAt()
-            );
-
-            kafkaTemplate.send("score.points.awarded", eventPayload);
-            logger.info("Published score.points.awarded event for user: {}", score.getUserId());
-        } catch (Exception e) {
-            logger.error("Error publishing score.points.awarded event: {}", e.getMessage());
         }
     }
 }
