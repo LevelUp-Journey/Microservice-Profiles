@@ -73,3 +73,10 @@ app:
     allowed-headers: ${CORS_ALLOWED_HEADERS:*}
     allow-credentials: ${CORS_ALLOW_CREDENTIALS:true}
     max-age: ${CORS_MAX_AGE:3600}
+
+# ===================================================
+# JWT Configuration
+# ===================================================
+  jwt:
+    secret: ${JWT_SECRET:d3ee61e796a04895924719559f19a19de2e31d4c330208d8c410c2d63c89de9b5aadc298404a843d521569e812c599bda47b65d4c7fce5a8ded21f24d8df59dc}
+    expiration: ${JWT_EXPIRATION:86400000}
