@@ -36,25 +36,46 @@ public class LeaderboardCommandServiceImpl implements LeaderboardCommandService 
         // Check if entry already exists
         var existingEntry = leaderboardEntryRepository.findByUserId(userId);
 
+        Integer oldPosition = null;
         if (existingEntry.isPresent()) {
+            oldPosition = existingEntry.get().getPosition();
+
             // Update existing entry
             var entry = existingEntry.get();
-            var newPosition = calculatePosition(command.totalPoints());
-            entry.updatePointsAndPosition(command.totalPoints(), newPosition);
+            entry.updatePointsAndPosition(command.totalPoints(), 0); // Temporary position
 
             var savedEntry = leaderboardEntryRepository.save(entry);
-            logger.info("Updated leaderboard entry for user {} with {} points at position {}",
-                    command.userId(), command.totalPoints(), newPosition);
+
+            // Recalculate position with tie-breaking after save
+            var calculatedPosition = leaderboardEntryRepository.calculatePositionForUser(userId);
+            savedEntry.updatePosition(calculatedPosition.intValue());
+            savedEntry = leaderboardEntryRepository.save(savedEntry);
+
+            logger.info("Updated leaderboard entry for user {} with {} points. Position changed: {} → {}",
+                    command.userId(), command.totalPoints(), oldPosition, calculatedPosition);
+
+            // Recalculate positions for ALL other users to maintain consistency
+            recalculateAllPositions();
 
             return Optional.of(savedEntry);
         } else {
-            // Create new entry
-            var newPosition = calculatePosition(command.totalPoints());
-            var newEntry = new LeaderboardEntry(command, newPosition);
+            // Create new entry - assign last position initially
+            var totalEntries = leaderboardEntryRepository.countTotalEntries();
+            var initialPosition = totalEntries.intValue() + 1;
+            var newEntry = new LeaderboardEntry(command, initialPosition);
 
             var savedEntry = leaderboardEntryRepository.save(newEntry);
+
+            // Recalculate position with tie-breaking after save
+            var calculatedPosition = leaderboardEntryRepository.calculatePositionForUser(userId);
+            savedEntry.updatePosition(calculatedPosition.intValue());
+            savedEntry = leaderboardEntryRepository.save(savedEntry);
+
             logger.info("Created leaderboard entry for user {} with {} points at position {}",
-                    command.userId(), command.totalPoints(), newPosition);
+                    command.userId(), command.totalPoints(), calculatedPosition);
+
+            // Recalculate positions for ALL other users to maintain consistency
+            recalculateAllPositions();
 
             return Optional.of(savedEntry);
         }
@@ -64,31 +85,47 @@ public class LeaderboardCommandServiceImpl implements LeaderboardCommandService 
     @Transactional
     public Integer handle(RecalculateLeaderboardPositionsCommand command) {
         logger.info("Starting leaderboard position recalculation");
+        return recalculateAllPositions();
+    }
 
-        // Get all entries ordered by points
-        List<LeaderboardEntry> allEntries = leaderboardEntryRepository.findAllOrderedByPointsDesc();
+    /**
+     * Recalculates positions for ALL leaderboard entries
+     * Uses the tie-breaking logic: higher points first, then earlier created_at
+     *
+     * This ensures:
+     * - No duplicate positions
+     * - Correct ordering after any update
+     * - Users who gain points push others down
+     *
+     * @return Number of entries updated
+     */
+    private Integer recalculateAllPositions() {
+        // Get all entries
+        List<LeaderboardEntry> allEntries = leaderboardEntryRepository.findAll();
 
         int updatedCount = 0;
-        int position = 1;
 
         for (LeaderboardEntry entry : allEntries) {
-            entry.updatePosition(position);
-            leaderboardEntryRepository.save(entry);
-            updatedCount++;
-            position++;
+            // Calculate correct position using tie-breaking query
+            var userIdVO = new LeaderboardUserId(entry.getUserId());
+            var calculatedPosition = leaderboardEntryRepository.calculatePositionForUser(userIdVO);
+
+            if (calculatedPosition != null) {
+                Integer currentPosition = entry.getPosition();
+                Integer newPosition = calculatedPosition.intValue();
+
+                // Only update if position changed
+                if (!newPosition.equals(currentPosition)) {
+                    entry.updatePosition(newPosition);
+                    leaderboardEntryRepository.save(entry);
+                    updatedCount++;
+                    logger.debug("Updated position for user {}: {} → {}",
+                            entry.getUserId(), currentPosition, newPosition);
+                }
+            }
         }
 
         logger.info("Leaderboard recalculation completed. Updated {} entries", updatedCount);
         return updatedCount;
-    }
-
-    /**
-     * Calculate position for a given points value
-     * Uses database query to count entries with higher points (O(1) complexity)
-     * Position = count of entries with more points + 1
-     */
-    private Integer calculatePosition(Integer points) {
-        Long higherCount = leaderboardEntryRepository.countEntriesWithHigherPoints(points);
-        return higherCount.intValue() + 1;
     }
 }
