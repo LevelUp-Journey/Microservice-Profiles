@@ -3,11 +3,15 @@ package com.levelup.journey.platform.microserviceprofiles.profiles.application.i
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.aggregates.Profile;
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.commands.CreateProfileFromUserCommand;
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.commands.UpdateProfileCommand;
+import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.events.ProfileCreatedEvent;
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.valueobjects.UserId;
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.valueobjects.Username;
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.services.ProfileCommandService;
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.services.UsernameGeneratorService;
 import com.levelup.journey.platform.microserviceprofiles.profiles.infrastructure.persistence.jpa.repositories.ProfileRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,19 +22,25 @@ import java.util.Optional;
  */
 @Service
 public class ProfileCommandServiceImpl implements ProfileCommandService {
+    private static final Logger logger = LoggerFactory.getLogger(ProfileCommandServiceImpl.class);
+
     private final ProfileRepository profileRepository;
     private final UsernameGeneratorService usernameGeneratorService;
+    private final ApplicationEventPublisher eventPublisher;
 
     /**
      * Constructor
      *
      * @param profileRepository The {@link ProfileRepository} instance
      * @param usernameGeneratorService The {@link UsernameGeneratorService} instance
+     * @param eventPublisher The {@link ApplicationEventPublisher} instance for domain events
      */
     public ProfileCommandServiceImpl(ProfileRepository profileRepository,
-                                   UsernameGeneratorService usernameGeneratorService) {
+                                   UsernameGeneratorService usernameGeneratorService,
+                                   ApplicationEventPublisher eventPublisher) {
         this.profileRepository = profileRepository;
         this.usernameGeneratorService = usernameGeneratorService;
+        this.eventPublisher = eventPublisher;
     }
 
     // inherited javadoc
@@ -50,6 +60,19 @@ public class ProfileCommandServiceImpl implements ProfileCommandService {
         // Create and save profile
         var profile = new Profile(command, username);
         var savedProfile = profileRepository.save(profile);
+
+        // Publish domain event for other bounded contexts to react
+        var event = new ProfileCreatedEvent(
+                savedProfile.getUserId(),
+                savedProfile.getFirstName(),
+                savedProfile.getLastName(),
+                savedProfile.getUsername(),
+                savedProfile.getProfileUrl()
+        );
+        eventPublisher.publishEvent(event);
+
+        logger.info("Profile created for user ID: {} with username: {}. ProfileCreatedEvent published.",
+                savedProfile.getUserId(), savedProfile.getUsername());
 
         return Optional.of(savedProfile);
     }

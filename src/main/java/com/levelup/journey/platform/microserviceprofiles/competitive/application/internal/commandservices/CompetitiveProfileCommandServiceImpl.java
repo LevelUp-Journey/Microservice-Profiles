@@ -7,6 +7,7 @@ import com.levelup.journey.platform.microserviceprofiles.competitive.domain.mode
 import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.commands.SyncCompetitiveProfileFromScoresCommand;
 import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.commands.UpdateCompetitivePointsCommand;
 import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.entities.Rank;
+import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.events.CompetitiveProfileCreatedEvent;
 import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.valueobjects.CompetitiveRank;
 import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.valueobjects.CompetitiveUserId;
 import com.levelup.journey.platform.microserviceprofiles.competitive.domain.services.CompetitiveProfileCommandService;
@@ -14,6 +15,7 @@ import com.levelup.journey.platform.microserviceprofiles.competitive.infrastruct
 import com.levelup.journey.platform.microserviceprofiles.competitive.infrastructure.persistence.jpa.repositories.RankRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,14 +32,17 @@ public class CompetitiveProfileCommandServiceImpl implements CompetitiveProfileC
     private final CompetitiveProfileRepository competitiveProfileRepository;
     private final RankRepository rankRepository;
     private final ExternalScoresService externalScoresService;
+    private final ApplicationEventPublisher eventPublisher;
 
     public CompetitiveProfileCommandServiceImpl(
             CompetitiveProfileRepository competitiveProfileRepository,
             RankRepository rankRepository,
-            ExternalScoresService externalScoresService) {
+            ExternalScoresService externalScoresService,
+            ApplicationEventPublisher eventPublisher) {
         this.competitiveProfileRepository = competitiveProfileRepository;
         this.rankRepository = rankRepository;
         this.externalScoresService = externalScoresService;
+        this.eventPublisher = eventPublisher;
     }
 
     @Override
@@ -65,6 +70,16 @@ public class CompetitiveProfileCommandServiceImpl implements CompetitiveProfileC
 
         logger.info("Created competitive profile for user {} with {} points and rank {}",
                 command.userId(), totalPoints, competitiveProfile.getCurrentRank().getRankName());
+
+        // Publish domain event for other bounded contexts to react
+        var event = new CompetitiveProfileCreatedEvent(
+                savedProfile.getUserId(),
+                savedProfile.getTotalPoints(),
+                savedProfile.getCurrentRankName()
+        );
+        eventPublisher.publishEvent(event);
+
+        logger.info("CompetitiveProfileCreatedEvent published for user: {}", command.userId());
 
         return Optional.of(savedProfile);
     }
