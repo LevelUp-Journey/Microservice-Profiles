@@ -7,9 +7,9 @@ import java.util.regex.Pattern;
 @Embeddable
 public record Username(String username) {
 
-    // Username must be either USER + exactly 9 digits (13 characters total) or custom 3-15 chars
-    private static final Pattern VALID_USERNAME_PATTERN = Pattern.compile("^(?:USER\\d{9}|[a-zA-Z0-9_.-]{3,15})$");
-    private static final String INVALID_USERNAME_MESSAGE = "Username must be either auto-generated format (USER + 9 digits) or custom (3-15 alphanumeric characters, underscores, dots, or hyphens)";
+    // Username: alphanumeric characters only, no spaces, max 30 characters
+    private static final Pattern VALID_USERNAME_PATTERN = Pattern.compile("^[a-zA-Z0-9]{1,30}$");
+    private static final String INVALID_USERNAME_MESSAGE = "Username must contain only alphanumeric characters (letters and numbers), no spaces, maximum 30 characters";
 
     public Username() {
         this(null);
@@ -20,7 +20,7 @@ public record Username(String username) {
     }
 
     /**
-     * Validate username format - USER + 9 digits or custom 3-50 chars
+     * Validate username format - alphanumeric only, no spaces, max 30 characters
      */
     private static void validateUsername(String username) {
         if (username == null || username.trim().isEmpty()) {
