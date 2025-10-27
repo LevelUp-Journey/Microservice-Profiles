@@ -40,10 +40,11 @@ public class LeaderboardCommandServiceImpl implements LeaderboardCommandService 
         if (existingEntry.isPresent()) {
             oldPosition = existingEntry.get().getPosition();
 
-            // Update existing entry
+            // Update existing entry - first calculate the new position
             var entry = existingEntry.get();
-            entry.updatePointsAndPosition(command.totalPoints(), 0); // Temporary position
 
+            // Update points only first (keep current position temporarily)
+            entry.updatePointsAndPosition(command.totalPoints(), entry.getPosition());
             var savedEntry = leaderboardEntryRepository.save(entry);
 
             // Recalculate position with tie-breaking after save

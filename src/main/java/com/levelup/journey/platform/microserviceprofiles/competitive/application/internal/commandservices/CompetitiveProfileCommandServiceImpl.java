@@ -8,6 +8,7 @@ import com.levelup.journey.platform.microserviceprofiles.competitive.domain.mode
 import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.commands.UpdateCompetitivePointsCommand;
 import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.entities.Rank;
 import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.events.CompetitiveProfileCreatedEvent;
+import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.events.CompetitiveProfileUpdatedEvent;
 import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.valueobjects.CompetitiveRank;
 import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.valueobjects.CompetitiveUserId;
 import com.levelup.journey.platform.microserviceprofiles.competitive.domain.services.CompetitiveProfileCommandService;
@@ -110,6 +111,16 @@ public class CompetitiveProfileCommandServiceImpl implements CompetitiveProfileC
         logger.info("Updated competitive points for user {} to {} with rank {}",
                 command.userId(), command.newTotalPoints(), updatedProfile.getCurrentRank().getRankName());
 
+        // Publish domain event for other bounded contexts (e.g., Leaderboard BC)
+        var event = new CompetitiveProfileUpdatedEvent(
+                updatedProfile.getUserId(),
+                updatedProfile.getTotalPoints(),
+                updatedProfile.getCurrentRankName()
+        );
+        eventPublisher.publishEvent(event);
+
+        logger.info("CompetitiveProfileUpdatedEvent published for user: {}", command.userId());
+
         return Optional.of(updatedProfile);
     }
 
@@ -145,6 +156,16 @@ public class CompetitiveProfileCommandServiceImpl implements CompetitiveProfileC
 
         logger.info("Synchronized competitive profile for user {} with {} points and rank {}",
                 command.userId(), totalPoints.get(), savedProfile.getCurrentRank().getRankName());
+
+        // Publish domain event for other bounded contexts (e.g., Leaderboard BC)
+        var event = new CompetitiveProfileUpdatedEvent(
+                savedProfile.getUserId(),
+                savedProfile.getTotalPoints(),
+                savedProfile.getCurrentRankName()
+        );
+        eventPublisher.publishEvent(event);
+
+        logger.info("CompetitiveProfileUpdatedEvent published for user: {}", command.userId());
 
         return Optional.of(savedProfile);
     }
