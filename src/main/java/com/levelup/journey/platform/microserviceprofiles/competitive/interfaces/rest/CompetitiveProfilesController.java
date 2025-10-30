@@ -74,32 +74,51 @@ public class CompetitiveProfilesController {
     }
 
     /**
-     * Get users by rank
+     * Get users by rank with pagination
      */
     @GetMapping("/rank/{rank}")
-    @Operation(summary = "Get users by rank", description = "Retrieves all users with a specific competitive rank and total count")
+    @Operation(summary = "Get users by rank", description = "Retrieves paginated users with a specific competitive rank (exactly 20 users per page)")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Users retrieved successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid rank")
+            @ApiResponse(responseCode = "400", description = "Invalid rank or pagination parameters")
     })
     public ResponseEntity<UsersByRankResponse> getUsersByRank(
             @Parameter(description = "Competitive rank", example = "DIAMOND")
-            @PathVariable String rank) {
+            @PathVariable String rank,
+            @Parameter(description = "Number of entries to skip", example = "0")
+            @RequestParam(defaultValue = "0") Integer offset) {
 
         try {
             var competitiveRank = CompetitiveRank.valueOf(rank.toUpperCase());
-            var query = new GetUsersByRankQuery(competitiveRank);
+
+            // Get the rank entity and count total users with this rank
+            var rankEntity = rankRepository.findByRankName(competitiveRank)
+                    .orElseThrow(() -> new IllegalArgumentException("Rank not found: " + competitiveRank));
+
+            var totalUsers = competitiveProfileRepository.countByCurrentRank(rankEntity);
+
+            // Fixed limit of 20 users per page
+            Integer limit = 20;
+
+            // Validate offset is not negative
+            if (offset < 0) {
+                return ResponseEntity.badRequest().build();
+            }
+
+            // If offset is beyond total users, return empty list
+            if (offset >= totalUsers) {
+                // No users found for this rank/page
+                var response = new UsersByRankResponse(java.util.Collections.emptyList(), totalUsers);
+                return ResponseEntity.ok(response);
+            }
+
+            var query = new GetUsersByRankQuery(competitiveRank, limit, offset);
             var profiles = competitiveProfileQueryService.handle(query);
 
             var resources = profiles.stream()
                     .map(assembler::toResourceFromEntity)
                     .toList();
 
-            // Get the rank entity and count users with this rank
-            var rankEntity = rankRepository.findByRankName(competitiveRank)
-                    .orElseThrow(() -> new IllegalArgumentException("Rank not found: " + competitiveRank));
-
-            var totalUsers = competitiveProfileRepository.countByCurrentRank(rankEntity);
             var response = new UsersByRankResponse(resources, totalUsers);
 
             return ResponseEntity.ok(response);
