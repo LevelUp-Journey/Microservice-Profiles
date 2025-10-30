@@ -9,6 +9,7 @@ public record ProfileResource(
         UUID id,
         String username,
         String profileUrl,
+        String provider,
         String firstName,
         String lastName) {
 }

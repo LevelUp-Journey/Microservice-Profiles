@@ -21,6 +21,7 @@ public class ProfileCreatedEvent {
     private final String lastName;
     private final String username;
     private final String profileUrl;
+    private final String provider;
     private final LocalDateTime occurredOn;
 
     /**
@@ -31,14 +32,16 @@ public class ProfileCreatedEvent {
      * @param lastName The user's last name
      * @param username The generated or custom username
      * @param profileUrl The user's profile URL
+     * @param provider The authentication provider
      */
     public ProfileCreatedEvent(String userId, String firstName, String lastName,
-                              String username, String profileUrl) {
+                              String username, String profileUrl, String provider) {
         this.userId = userId;
         this.firstName = firstName;
         this.lastName = lastName;
         this.username = username;
         this.profileUrl = profileUrl;
+        this.provider = provider;
         this.occurredOn = LocalDateTime.now();
     }
 }

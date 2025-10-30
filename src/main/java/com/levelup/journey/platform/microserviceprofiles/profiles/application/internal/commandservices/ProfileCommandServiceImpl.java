@@ -67,7 +67,8 @@ public class ProfileCommandServiceImpl implements ProfileCommandService {
                 savedProfile.getFirstName(),
                 savedProfile.getLastName(),
                 savedProfile.getUsername(),
-                savedProfile.getProfileUrl()
+                savedProfile.getProfileUrl(),
+                savedProfile.getProvider()
         );
         eventPublisher.publishEvent(event);
 
@@ -97,6 +98,7 @@ public class ProfileCommandServiceImpl implements ProfileCommandService {
         // Update profile fields
         profile.updateName(command.firstName(), command.lastName());
         profile.updateProfileUrl(command.profileUrl());
+        profile.updateProvider(command.provider());
 
         // Save updated profile
         var savedProfile = profileRepository.save(profile);

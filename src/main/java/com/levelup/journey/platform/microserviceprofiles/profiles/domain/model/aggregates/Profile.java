@@ -5,6 +5,7 @@ import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.v
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.valueobjects.Username;
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.valueobjects.PersonName;
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.valueobjects.ProfileUrl;
+import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.valueobjects.Provider;
 import com.levelup.journey.platform.microserviceprofiles.shared.domain.model.aggregates.AuditableAbstractAggregateRoot;
 import jakarta.persistence.*;
 import org.springframework.data.domain.Persistable;
@@ -31,13 +32,19 @@ public class Profile extends AuditableAbstractAggregateRoot<Profile> implements 
             @AttributeOverride(name = "url", column = @Column(name = "profile_url"))})
     private ProfileUrl profileUrl;
 
+    @Embedded
+    @AttributeOverrides({
+            @AttributeOverride(name = "value", column = @Column(name = "provider"))})
+    private Provider provider;
+
     @Transient
     private boolean isNew = true;
 
-    public Profile(String firstName, String lastName, String username, String profileUrl) {
+    public Profile(String firstName, String lastName, String username, String profileUrl, String provider) {
         this.name = new PersonName(firstName, lastName);
         this.username = new Username(username);
         this.profileUrl = new ProfileUrl(profileUrl);
+        this.provider = new Provider(provider);
     }
 
     public Profile() {
@@ -49,6 +56,7 @@ public class Profile extends AuditableAbstractAggregateRoot<Profile> implements 
         this.name = new PersonName(command.firstName(), command.lastName());
         this.username = new Username(username);
         this.profileUrl = new ProfileUrl(command.profileUrl());
+        this.provider = new Provider(command.provider());
     }
 
     public String getFullName() {
@@ -71,6 +79,10 @@ public class Profile extends AuditableAbstractAggregateRoot<Profile> implements 
         return profileUrl != null ? profileUrl.value() : null;
     }
 
+    public String getProvider() {
+        return provider != null ? provider.value() : null;
+    }
+
     public void updateName(String firstName, String lastName) {
         this.name = new PersonName(firstName, lastName);
     }
@@ -84,6 +96,10 @@ public class Profile extends AuditableAbstractAggregateRoot<Profile> implements 
 
     public void updateProfileUrl(String profileUrl) {
         this.profileUrl = new ProfileUrl(profileUrl);
+    }
+
+    public void updateProvider(String provider) {
+        this.provider = new Provider(provider);
     }
 
     public String getUserId() {

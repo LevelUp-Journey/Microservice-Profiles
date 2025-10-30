@@ -17,6 +17,7 @@ public class ProfileResourceFromEntityAssembler {
                 entity.getId(),
                 entity.getUsername(),
                 entity.getProfileUrl(),
+                entity.getProvider(),
                 entity.getFirstName(),
                 entity.getLastName());
     }

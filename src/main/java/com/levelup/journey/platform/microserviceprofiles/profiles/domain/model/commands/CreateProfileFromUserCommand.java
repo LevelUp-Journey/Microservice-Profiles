@@ -7,6 +7,7 @@ public record CreateProfileFromUserCommand(
         String userId,
         String firstName,
         String lastName,
-        String profileUrl
+        String profileUrl,
+        String provider
 ) {
 }
