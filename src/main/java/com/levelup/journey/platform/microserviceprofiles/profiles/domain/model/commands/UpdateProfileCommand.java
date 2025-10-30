@@ -7,6 +7,7 @@ public record UpdateProfileCommand(
         String firstName,
         String lastName,
         String username,
-        String profileUrl
+        String profileUrl,
+        String provider
 ) {
 }

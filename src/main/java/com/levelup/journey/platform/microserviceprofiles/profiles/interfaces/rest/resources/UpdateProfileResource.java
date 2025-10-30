@@ -29,6 +29,10 @@ public record UpdateProfileResource(
         @URL(message = "Profile URL must be a valid HTTP or HTTPS URL")
         @Size(max = 255, message = "Profile URL cannot exceed 255 characters")
         @Schema(description = "User's profile URL (optional)", example = "https://github.com/username")
-        String profileUrl
+        String profileUrl,
+
+        @Size(max = 50, message = "Provider cannot exceed 50 characters")
+        @Schema(description = "Authentication provider", example = "google")
+        String provider
 ) {
 }
