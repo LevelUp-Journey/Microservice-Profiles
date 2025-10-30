@@ -10,6 +10,7 @@ import com.levelup.journey.platform.microserviceprofiles.competitive.infrastruct
 import com.levelup.journey.platform.microserviceprofiles.competitive.infrastructure.persistence.jpa.repositories.RankRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -50,13 +51,20 @@ public class CompetitiveProfileQueryServiceImpl implements CompetitiveProfileQue
     @Override
     @Transactional(readOnly = true)
     public List<CompetitiveProfile> handle(GetUsersByRankQuery query) {
-        logger.debug("Fetching users with rank: {}", query.rank());
+        logger.debug("Fetching users with rank: {} (limit: {}, offset: {})",
+                query.rank(), query.limit(), query.offset());
 
         // Find the rank entity by enum value
         var rankEntity = rankRepository.findByRankName(query.rank())
                 .orElseThrow(() -> new IllegalArgumentException("Rank not found: " + query.rank()));
 
-        return competitiveProfileRepository.findByCurrentRank(rankEntity);
+        // Create pageable with pagination parameters
+        var pageable = PageRequest.of(
+                query.offset() / query.limit(), // page number
+                query.limit()                   // page size
+        );
+
+        return competitiveProfileRepository.findByCurrentRank(rankEntity, pageable);
     }
 
     @Override
