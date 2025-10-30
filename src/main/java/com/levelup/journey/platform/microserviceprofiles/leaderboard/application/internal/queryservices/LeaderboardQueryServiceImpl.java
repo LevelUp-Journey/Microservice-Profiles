@@ -59,9 +59,12 @@ public class LeaderboardQueryServiceImpl implements LeaderboardQueryService {
     @Override
     @Transactional(readOnly = true)
     public List<LeaderboardEntry> handle(GetTop500Query query) {
-        logger.debug("Fetching top 500 leaderboard entries");
+        logger.debug("Fetching top 500 leaderboard entries (limit: {}, offset: {})", query.limit(), query.offset());
 
-        var pageable = PageRequest.of(0, 500);
+        var pageable = PageRequest.of(
+                query.offset() / query.limit(), // page number
+                query.limit()                   // page size
+        );
         return leaderboardEntryRepository.findTop500(pageable);
     }
 }
