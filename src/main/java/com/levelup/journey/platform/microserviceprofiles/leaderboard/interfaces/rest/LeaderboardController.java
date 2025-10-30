@@ -6,7 +6,9 @@ import com.levelup.journey.platform.microserviceprofiles.leaderboard.domain.mode
 import com.levelup.journey.platform.microserviceprofiles.leaderboard.domain.model.queries.GetUserPositionQuery;
 import com.levelup.journey.platform.microserviceprofiles.leaderboard.domain.services.LeaderboardCommandService;
 import com.levelup.journey.platform.microserviceprofiles.leaderboard.domain.services.LeaderboardQueryService;
+import com.levelup.journey.platform.microserviceprofiles.leaderboard.infrastructure.persistence.jpa.repositories.LeaderboardEntryRepository;
 import com.levelup.journey.platform.microserviceprofiles.leaderboard.interfaces.rest.resources.LeaderboardEntryResource;
+import com.levelup.journey.platform.microserviceprofiles.leaderboard.interfaces.rest.resources.LeaderboardResponse;
 import com.levelup.journey.platform.microserviceprofiles.leaderboard.interfaces.rest.transform.LeaderboardEntryResourceFromEntityAssembler;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -29,12 +31,15 @@ public class LeaderboardController {
 
     private final LeaderboardCommandService leaderboardCommandService;
     private final LeaderboardQueryService leaderboardQueryService;
+    private final LeaderboardEntryRepository leaderboardEntryRepository;
 
     public LeaderboardController(
             LeaderboardCommandService leaderboardCommandService,
-            LeaderboardQueryService leaderboardQueryService) {
+            LeaderboardQueryService leaderboardQueryService,
+            LeaderboardEntryRepository leaderboardEntryRepository) {
         this.leaderboardCommandService = leaderboardCommandService;
         this.leaderboardQueryService = leaderboardQueryService;
+        this.leaderboardEntryRepository = leaderboardEntryRepository;
     }
 
     /**
@@ -62,22 +67,46 @@ public class LeaderboardController {
     }
 
     /**
-     * Get TOP 500 leaderboard
+     * Get TOP 500 leaderboard with pagination
      */
     @GetMapping("/top500")
-    @Operation(summary = "Get TOP 500", description = "Retrieves the top 500 users in the leaderboard")
+    @Operation(summary = "Get TOP 500", description = "Retrieves paginated top 500 users in the leaderboard (exactly 20 users per page)")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "TOP 500 retrieved successfully")
     })
-    public ResponseEntity<List<LeaderboardEntryResource>> getTop500() {
-        var query = new GetTop500Query();
+    public ResponseEntity<LeaderboardResponse> getTop500(
+            @Parameter(description = "Number of entries to skip", example = "0")
+            @RequestParam(defaultValue = "0") Integer offset) {
+
+        // Fixed limit of 20 users per page
+        Integer limit = 20;
+
+        // Get total users count
+        long totalUsers = leaderboardEntryRepository.countTotalEntries();
+
+        // Calculate max offset for top 500 (cannot exceed 500)
+        long maxTop500Users = Math.min(totalUsers, 500L);
+
+        // Validate offset is not negative
+        if (offset < 0) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        // If offset is beyond top 500 limit, return empty list
+        if (offset >= maxTop500Users) {
+            var response = new LeaderboardResponse(java.util.Collections.emptyList(), totalUsers);
+            return ResponseEntity.ok(response);
+        }
+
+        var query = new GetTop500Query(limit, offset);
         var entries = leaderboardQueryService.handle(query);
 
         var resources = entries.stream()
                 .map(LeaderboardEntryResourceFromEntityAssembler::toResourceFromEntity)
                 .toList();
 
-        return ResponseEntity.ok(resources);
+        var response = new LeaderboardResponse(resources, totalUsers);
+        return ResponseEntity.ok(response);
     }
 
     /**

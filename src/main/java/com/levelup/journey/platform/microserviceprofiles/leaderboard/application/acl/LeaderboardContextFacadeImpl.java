@@ -50,7 +50,7 @@ public class LeaderboardContextFacadeImpl implements LeaderboardContextFacade {
 
     @Override
     public List<String> getTop500UserIds() {
-        var query = new GetTop500Query();
+        var query = new GetTop500Query(500, 0);
         var entries = leaderboardQueryService.handle(query);
 
         return entries.stream()
