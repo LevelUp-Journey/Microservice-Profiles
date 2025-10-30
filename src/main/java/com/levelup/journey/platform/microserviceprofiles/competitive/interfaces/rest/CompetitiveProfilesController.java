@@ -6,7 +6,10 @@ import com.levelup.journey.platform.microserviceprofiles.competitive.domain.mode
 import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.valueobjects.CompetitiveRank;
 import com.levelup.journey.platform.microserviceprofiles.competitive.domain.services.CompetitiveProfileCommandService;
 import com.levelup.journey.platform.microserviceprofiles.competitive.domain.services.CompetitiveProfileQueryService;
+import com.levelup.journey.platform.microserviceprofiles.competitive.infrastructure.persistence.jpa.repositories.CompetitiveProfileRepository;
+import com.levelup.journey.platform.microserviceprofiles.competitive.infrastructure.persistence.jpa.repositories.RankRepository;
 import com.levelup.journey.platform.microserviceprofiles.competitive.interfaces.rest.resources.CompetitiveProfileResource;
+import com.levelup.journey.platform.microserviceprofiles.competitive.interfaces.rest.resources.UsersByRankResponse;
 import com.levelup.journey.platform.microserviceprofiles.competitive.interfaces.rest.transform.CompetitiveProfileResourceFromEntityAssembler;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -15,8 +18,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 /**
  * Competitive Profiles Controller
@@ -29,12 +30,21 @@ public class CompetitiveProfilesController {
 
     private final CompetitiveProfileCommandService competitiveProfileCommandService;
     private final CompetitiveProfileQueryService competitiveProfileQueryService;
+    private final CompetitiveProfileRepository competitiveProfileRepository;
+    private final RankRepository rankRepository;
+    private final CompetitiveProfileResourceFromEntityAssembler assembler;
 
     public CompetitiveProfilesController(
             CompetitiveProfileCommandService competitiveProfileCommandService,
-            CompetitiveProfileQueryService competitiveProfileQueryService) {
+            CompetitiveProfileQueryService competitiveProfileQueryService,
+            CompetitiveProfileRepository competitiveProfileRepository,
+            RankRepository rankRepository,
+            CompetitiveProfileResourceFromEntityAssembler assembler) {
         this.competitiveProfileCommandService = competitiveProfileCommandService;
         this.competitiveProfileQueryService = competitiveProfileQueryService;
+        this.competitiveProfileRepository = competitiveProfileRepository;
+        this.rankRepository = rankRepository;
+        this.assembler = assembler;
     }
 
     /**
@@ -59,7 +69,7 @@ public class CompetitiveProfilesController {
             return ResponseEntity.notFound().build();
         }
 
-        var resource = CompetitiveProfileResourceFromEntityAssembler.toResourceFromEntity(profile.get());
+        var resource = assembler.toResourceFromEntity(profile.get());
         return ResponseEntity.ok(resource);
     }
 
@@ -67,12 +77,12 @@ public class CompetitiveProfilesController {
      * Get users by rank
      */
     @GetMapping("/rank/{rank}")
-    @Operation(summary = "Get users by rank", description = "Retrieves all users with a specific competitive rank")
+    @Operation(summary = "Get users by rank", description = "Retrieves all users with a specific competitive rank and total count")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Users retrieved successfully"),
             @ApiResponse(responseCode = "400", description = "Invalid rank")
     })
-    public ResponseEntity<List<CompetitiveProfileResource>> getUsersByRank(
+    public ResponseEntity<UsersByRankResponse> getUsersByRank(
             @Parameter(description = "Competitive rank", example = "DIAMOND")
             @PathVariable String rank) {
 
@@ -82,10 +92,17 @@ public class CompetitiveProfilesController {
             var profiles = competitiveProfileQueryService.handle(query);
 
             var resources = profiles.stream()
-                    .map(CompetitiveProfileResourceFromEntityAssembler::toResourceFromEntity)
+                    .map(assembler::toResourceFromEntity)
                     .toList();
 
-            return ResponseEntity.ok(resources);
+            // Get the rank entity and count users with this rank
+            var rankEntity = rankRepository.findByRankName(competitiveRank)
+                    .orElseThrow(() -> new IllegalArgumentException("Rank not found: " + competitiveRank));
+
+            var totalUsers = competitiveProfileRepository.countByCurrentRank(rankEntity);
+            var response = new UsersByRankResponse(resources, totalUsers);
+
+            return ResponseEntity.ok(response);
 
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().build();
@@ -112,7 +129,7 @@ public class CompetitiveProfilesController {
             return ResponseEntity.notFound().build();
         }
 
-        var resource = CompetitiveProfileResourceFromEntityAssembler.toResourceFromEntity(profile.get());
+        var resource = assembler.toResourceFromEntity(profile.get());
         return ResponseEntity.ok(resource);
     }
 

@@ -40,4 +40,12 @@ public interface CompetitiveProfileRepository extends JpaRepository<CompetitiveP
      * @return List of profiles with specified rank
      */
     List<CompetitiveProfile> findByCurrentRank(Rank rank);
+
+    /**
+     * Count profiles by competitive rank entity
+     *
+     * @param rank The rank entity
+     * @return Count of profiles with specified rank
+     */
+    Long countByCurrentRank(Rank rank);
 }

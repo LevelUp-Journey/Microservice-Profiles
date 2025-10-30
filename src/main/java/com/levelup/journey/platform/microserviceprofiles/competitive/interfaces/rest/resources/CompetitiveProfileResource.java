@@ -24,6 +24,9 @@ public record CompetitiveProfileResource(
         String nextRank,
 
         @Schema(description = "Points needed to reach next rank", example = "2080")
-        Integer pointsNeededForNextRank
+        Integer pointsNeededForNextRank,
+
+        @Schema(description = "Leaderboard position", example = "42", nullable = true)
+        Integer leaderboardPosition
 ) {
 }
