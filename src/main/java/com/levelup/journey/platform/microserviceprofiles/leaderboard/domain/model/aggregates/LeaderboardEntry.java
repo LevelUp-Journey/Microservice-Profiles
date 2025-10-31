@@ -4,7 +4,6 @@ import com.levelup.journey.platform.microserviceprofiles.leaderboard.domain.mode
 import com.levelup.journey.platform.microserviceprofiles.leaderboard.domain.model.valueobjects.LeaderboardPoints;
 import com.levelup.journey.platform.microserviceprofiles.leaderboard.domain.model.valueobjects.LeaderboardPosition;
 import com.levelup.journey.platform.microserviceprofiles.leaderboard.domain.model.valueobjects.LeaderboardUserId;
-import com.levelup.journey.platform.microserviceprofiles.leaderboard.domain.model.valueobjects.TotalTimeToAchievePoints;
 import com.levelup.journey.platform.microserviceprofiles.shared.domain.model.aggregates.AuditableAbstractAggregateRoot;
 import jakarta.persistence.*;
 
@@ -34,12 +33,6 @@ public class LeaderboardEntry extends AuditableAbstractAggregateRoot<Leaderboard
     })
     private LeaderboardPosition position;
 
-    @Embedded
-    @AttributeOverrides({
-            @AttributeOverride(name = "milliseconds", column = @Column(name = "total_time_to_achieve_points_ms", nullable = false))
-    })
-    private TotalTimeToAchievePoints totalTimeToAchievePoints;
-
     protected LeaderboardEntry() {
         // JPA constructor
     }
@@ -54,7 +47,6 @@ public class LeaderboardEntry extends AuditableAbstractAggregateRoot<Leaderboard
         this.userId = new LeaderboardUserId(command.userId());
         this.totalPoints = new LeaderboardPoints(command.totalPoints());
         this.position = new LeaderboardPosition(calculatedPosition);
-        this.totalTimeToAchievePoints = TotalTimeToAchievePoints.zero();
     }
 
     /**
@@ -68,7 +60,6 @@ public class LeaderboardEntry extends AuditableAbstractAggregateRoot<Leaderboard
         this.userId = new LeaderboardUserId(userId);
         this.totalPoints = new LeaderboardPoints(totalPoints);
         this.position = new LeaderboardPosition(position);
-        this.totalTimeToAchievePoints = TotalTimeToAchievePoints.zero();
     }
 
     /**
@@ -80,18 +71,6 @@ public class LeaderboardEntry extends AuditableAbstractAggregateRoot<Leaderboard
     public void updatePointsAndPosition(Integer newPoints, Integer newPosition) {
         this.totalPoints = new LeaderboardPoints(newPoints);
         this.position = new LeaderboardPosition(newPosition);
-    }
-
-    /**
-     * Accumulate execution time from a challenge completion
-     *
-     * @param executionTimeMs Time in milliseconds to add (will be converted to seconds)
-     */
-    public void accumulateExecutionTime(Long executionTimeMs) {
-        if (executionTimeMs != null && executionTimeMs > 0) {
-            Long executionTimeSeconds = executionTimeMs / 1000;
-            this.totalTimeToAchievePoints = this.totalTimeToAchievePoints.add(executionTimeSeconds);
-        }
     }
 
     /**
@@ -115,10 +94,6 @@ public class LeaderboardEntry extends AuditableAbstractAggregateRoot<Leaderboard
 
     public Integer getPosition() {
         return position.position();
-    }
-
-    public Long getTotalTimeToAchievePointsMs() {
-        return totalTimeToAchievePoints.seconds();
     }
 
     public boolean isTop500() {

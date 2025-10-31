@@ -20,9 +20,6 @@ public record LeaderboardEntryResource(
         @Schema(description = "Leaderboard position", example = "42")
         Integer position,
 
-        @Schema(description = "Total cumulative time to complete all challenges in seconds", example = "86400")
-        Long totalTimeToAchievePointsMs,
-
         @Schema(description = "Whether user is in TOP500", example = "true")
         Boolean isTop500
 ) {

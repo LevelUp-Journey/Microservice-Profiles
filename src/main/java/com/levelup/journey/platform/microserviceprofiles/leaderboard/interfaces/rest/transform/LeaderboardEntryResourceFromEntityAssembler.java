@@ -21,7 +21,6 @@ public class LeaderboardEntryResourceFromEntityAssembler {
                 entity.getUserId(),
                 entity.getTotalPoints(),
                 entity.getPosition(),
-                entity.getTotalTimeToAchievePointsMs(),
                 entity.isTop500()
         );
     }

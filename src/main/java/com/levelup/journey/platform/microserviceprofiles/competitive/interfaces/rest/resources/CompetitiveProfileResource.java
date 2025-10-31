@@ -17,9 +17,6 @@ public record CompetitiveProfileResource(
         @Schema(description = "Total accumulated points", example = "5420")
         Integer totalPoints,
 
-        @Schema(description = "Total cumulative time to complete all challenges in seconds", example = "86400")
-        Long totalTimeToAchievePointsMs,
-
         @Schema(description = "Current competitive rank", example = "DIAMOND")
         String currentRank,
 

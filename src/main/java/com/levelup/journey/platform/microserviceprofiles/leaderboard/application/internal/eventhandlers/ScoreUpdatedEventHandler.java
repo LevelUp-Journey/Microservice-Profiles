@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Score Updated Event Handler
@@ -32,6 +33,7 @@ public class ScoreUpdatedEventHandler {
      */
     @EventListener
     @Async
+    @Transactional
     public void on(ScoreUpdatedEvent event) {
         logger.info("Received ScoreUpdatedEvent for user {} with {} total points and {} ms execution time",
                 event.getUserId(), event.getNewTotalPoints(), event.getExecutionTimeMs());
@@ -46,15 +48,10 @@ public class ScoreUpdatedEventHandler {
             var updatedEntry = leaderboardCommandService.handle(command);
 
             if (updatedEntry.isPresent()) {
-                // Accumulate execution time from this challenge (converts from ms to seconds)
-                var entry = updatedEntry.get();
-                entry.accumulateExecutionTime(event.getExecutionTimeMs());
-
-                logger.info("Updated leaderboard entry for user {} - Position: {}, Points: {}, Total Time: {} seconds",
+                logger.info("Updated leaderboard entry for user {} - Position: {}, Points: {}",
                         event.getUserId(),
-                        entry.getPosition(),
-                        entry.getTotalPoints(),
-                        entry.getTotalTimeToAchievePointsMs());
+                        updatedEntry.get().getPosition(),
+                        updatedEntry.get().getTotalPoints());
             } else {
                 logger.warn("Failed to update leaderboard entry for user {}", event.getUserId());
             }
