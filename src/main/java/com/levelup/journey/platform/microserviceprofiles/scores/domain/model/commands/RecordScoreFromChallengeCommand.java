@@ -8,7 +8,8 @@ public record RecordScoreFromChallengeCommand(
         String challengeId,
         String challengeType,
         Integer points,
-        Long executionTimeMs
+        Long executionTimeMs,
+        Long solutionTimeSeconds
 ) {
     public RecordScoreFromChallengeCommand {
         if (userId == null || userId.trim().isEmpty()) {
@@ -25,6 +26,9 @@ public record RecordScoreFromChallengeCommand(
         }
         if (executionTimeMs == null || executionTimeMs < 0) {
             throw new IllegalArgumentException("Execution time cannot be negative");
+        }
+        if (solutionTimeSeconds == null || solutionTimeSeconds < 0) {
+            throw new IllegalArgumentException("Solution time cannot be negative");
         }
     }
 }

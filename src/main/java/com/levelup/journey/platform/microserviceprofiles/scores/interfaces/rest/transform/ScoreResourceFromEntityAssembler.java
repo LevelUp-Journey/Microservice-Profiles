@@ -17,6 +17,8 @@ public class ScoreResourceFromEntityAssembler {
                 entity.getSource().name(),
                 entity.getChallengeId(),
                 entity.getChallengeType(),
+                entity.getExecutionTimeMs(),
+                entity.getSolutionTimeSeconds(),
                 entity.getCreatedAt()
         );
     }
