@@ -130,24 +130,24 @@ public class ProfilesController {
     /**
      * Search users by username pattern
      * @param username The username pattern to search for (case-insensitive, minimum 2 characters)
-     * @return A list of {@link UserSearchResultResource} containing matching users with fullName, profileUrl, and userId
+     * @return A list of {@link UserSearchResultResource} containing matching users with fullName, profileUrl, and userId.
+     *         Returns an empty list if no users are found.
      */
     @GetMapping("/search")
     @Operation(
             summary = "Search users by username",
-            description = "Search for users by username pattern (case-insensitive). Returns basic user information including fullName (firstName + lastName), profileUrl, and userId"
+            description = "Search for users by username pattern (case-insensitive). Returns basic user information including fullName (firstName + lastName), profileUrl, and userId. " +
+                    "Returns an empty list if no users match the search criteria."
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Users found matching the search criteria"),
-            @ApiResponse(responseCode = "400", description = "Invalid search criteria - username pattern must be at least 2 characters"),
-            @ApiResponse(responseCode = "404", description = "No users found matching the search criteria")
+            @ApiResponse(responseCode = "200", description = "Search completed successfully. Returns list of matching users or empty list if no matches found."),
+            @ApiResponse(responseCode = "400", description = "Invalid search criteria - username pattern must be at least 2 characters")
     })
     public ResponseEntity<List<UserSearchResultResource>> searchUsersByUsername(
             @RequestParam(name = "username") String username) {
         try {
             var searchQuery = new SearchUsersByUsernameQuery(username);
             var profiles = profileQueryService.handle(searchQuery);
-            if (profiles.isEmpty()) return ResponseEntity.notFound().build();
             var searchResults = profiles.stream()
                     .map(profile -> new UserSearchResultResource(
                             profile.getUserId(),
