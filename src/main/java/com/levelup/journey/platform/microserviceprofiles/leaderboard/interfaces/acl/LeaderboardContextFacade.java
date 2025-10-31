@@ -38,4 +38,12 @@ public interface LeaderboardContextFacade {
      * @return true if user is in TOP 500
      */
     Boolean isUserInTop500(String userId);
+
+    /**
+     * Get user's total time to achieve all points
+     *
+     * @param userId User identifier
+     * @return Total time in milliseconds, or 0 if user not found
+     */
+    Long getTotalTimeToAchievePointsByUserId(String userId);
 }

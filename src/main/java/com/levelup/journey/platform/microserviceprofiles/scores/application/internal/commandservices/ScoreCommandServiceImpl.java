@@ -41,18 +41,19 @@ public class ScoreCommandServiceImpl implements ScoreCommandService {
         
         // Calculate new total points for the user
         var totalPoints = scoreRepository.sumPointsByUserId(savedScore.getUserId());
-        
-        // Publish domain event for other contexts
+
+        // Publish domain event for other contexts with execution time
         var event = new ScoreUpdatedEvent(
             savedScore.getUserId(),
             totalPoints,
             savedScore.getPoints(),
-            savedScore.getSource().name()
+            savedScore.getSource().name(),
+            command.executionTimeMs()
         );
         eventPublisher.publishEvent(event);
-        
-        logger.debug("Published ScoreUpdatedEvent for user: {} with total points: {}", 
-            savedScore.getUserId(), totalPoints);
+
+        logger.debug("Published ScoreUpdatedEvent for user: {} with total points: {} and execution time: {} ms",
+            savedScore.getUserId(), totalPoints, command.executionTimeMs());
         
         return Optional.of(savedScore);
     }

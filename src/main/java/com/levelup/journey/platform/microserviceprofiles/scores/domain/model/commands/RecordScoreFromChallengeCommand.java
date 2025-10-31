@@ -7,7 +7,8 @@ public record RecordScoreFromChallengeCommand(
         String userId,
         String challengeId,
         String challengeType,
-        Integer points
+        Integer points,
+        Long executionTimeMs
 ) {
     public RecordScoreFromChallengeCommand {
         if (userId == null || userId.trim().isEmpty()) {
@@ -21,6 +22,9 @@ public record RecordScoreFromChallengeCommand(
         }
         if (points == null || points <= 0) {
             throw new IllegalArgumentException("Points must be greater than zero");
+        }
+        if (executionTimeMs == null || executionTimeMs < 0) {
+            throw new IllegalArgumentException("Execution time cannot be negative");
         }
     }
 }

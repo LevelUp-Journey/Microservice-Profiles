@@ -53,4 +53,12 @@ public interface ProfileRepository extends JpaRepository<Profile, UUID> {
      * @return True if the user ID exists, otherwise false
      */
     boolean existsByUserId(UserId userId);
+
+    /**
+     * Search Profiles by username pattern (case-insensitive)
+     *
+     * @param usernamePattern The username pattern to search for
+     * @return A list of {@link Profile} instances matching the pattern
+     */
+    java.util.List<Profile> findByUsernameUsernameContainingIgnoreCase(String usernamePattern);
 }

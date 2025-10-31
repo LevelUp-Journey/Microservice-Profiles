@@ -6,7 +6,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
  * Competitive Profile Resource
  * DTO for competitive profile data transfer
  */
-@Schema(description = "Competitive profile information including rank and points")
+@Schema(description = "Competitive profile information including rank, points, and total time")
 public record CompetitiveProfileResource(
         @Schema(description = "Profile unique identifier", example = "550e8400-e29b-41d4-a716-446655440000")
         String id,
@@ -16,6 +16,9 @@ public record CompetitiveProfileResource(
 
         @Schema(description = "Total accumulated points", example = "5420")
         Integer totalPoints,
+
+        @Schema(description = "Total cumulative time to complete all challenges in seconds", example = "86400")
+        Long totalTimeToAchievePointsMs,
 
         @Schema(description = "Current competitive rank", example = "DIAMOND")
         String currentRank,

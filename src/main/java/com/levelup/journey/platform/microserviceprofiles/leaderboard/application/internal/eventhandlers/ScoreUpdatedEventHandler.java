@@ -26,14 +26,15 @@ public class ScoreUpdatedEventHandler {
     /**
      * Handle ScoreUpdatedEvent
      * Updates leaderboard entry when user's score changes
+     * Also accumulates execution time from challenge completions
      *
      * @param event The ScoreUpdatedEvent
      */
     @EventListener
     @Async
     public void on(ScoreUpdatedEvent event) {
-        logger.info("Received ScoreUpdatedEvent for user {} with {} total points",
-                event.getUserId(), event.getNewTotalPoints());
+        logger.info("Received ScoreUpdatedEvent for user {} with {} total points and {} ms execution time",
+                event.getUserId(), event.getNewTotalPoints(), event.getExecutionTimeMs());
 
         try {
             // Update leaderboard entry with new total points
@@ -45,10 +46,15 @@ public class ScoreUpdatedEventHandler {
             var updatedEntry = leaderboardCommandService.handle(command);
 
             if (updatedEntry.isPresent()) {
-                logger.info("Updated leaderboard entry for user {} - Position: {}, Points: {}",
+                // Accumulate execution time from this challenge (converts from ms to seconds)
+                var entry = updatedEntry.get();
+                entry.accumulateExecutionTime(event.getExecutionTimeMs());
+
+                logger.info("Updated leaderboard entry for user {} - Position: {}, Points: {}, Total Time: {} seconds",
                         event.getUserId(),
-                        updatedEntry.get().getPosition(),
-                        updatedEntry.get().getTotalPoints());
+                        entry.getPosition(),
+                        entry.getTotalPoints(),
+                        entry.getTotalTimeToAchievePointsMs());
             } else {
                 logger.warn("Failed to update leaderboard entry for user {}", event.getUserId());
             }
