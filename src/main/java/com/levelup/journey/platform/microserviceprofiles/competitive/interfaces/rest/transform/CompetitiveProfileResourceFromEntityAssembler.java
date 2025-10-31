@@ -38,6 +38,7 @@ public class CompetitiveProfileResourceFromEntityAssembler {
                 entity.getId().toString(),
                 entity.getUserId(),
                 entity.getTotalPoints(),
+                entity.getTotalTimeToAchievePointsMs(),
                 currentRankEnum.name(),
                 nextRank != null ? nextRank.name() : null,
                 pointsNeeded,

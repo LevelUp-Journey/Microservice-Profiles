@@ -44,19 +44,29 @@ public class ChallengeCompletedEventListener {
             String challengeType = "CHALLENGE"; // Default type as it's not in the event
             Integer points = eventData.get("experiencePointsEarned").asInt();
 
+            // Extract execution time if available (time taken to complete the challenge)
+            Long executionTimeMs = eventData.has("executionTimeMs")
+                    ? eventData.get("executionTimeMs").asLong()
+                    : 0L;
+
+            logger.info("Challenge completed by user {} with {} points in {} ms",
+                    userId, points, executionTimeMs);
+
             // Create command
             var command = new RecordScoreFromChallengeCommand(
                     userId,
                     challengeId,
                     challengeType,
-                    points
+                    points,
+                    executionTimeMs
             );
 
             // Execute command
             var score = scoreCommandService.handle(command);
 
             if (score.isPresent()) {
-                logger.info("Score recorded successfully for user: {} with points: {}", userId, points);
+                logger.info("Score recorded successfully for user: {} with points: {} and execution time: {} ms",
+                        userId, points, executionTimeMs);
             } else {
                 logger.warn("Failed to record score for user: {}", userId);
             }

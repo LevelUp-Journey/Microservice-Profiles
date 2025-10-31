@@ -69,4 +69,16 @@ public class LeaderboardContextFacadeImpl implements LeaderboardContextFacade {
 
         return entry.map(leaderboardEntry -> leaderboardEntry.isTop500()).orElse(false);
     }
+
+    @Override
+    public Long getTotalTimeToAchievePointsByUserId(String userId) {
+        if (userId == null || userId.isBlank()) {
+            return 0L;
+        }
+
+        var query = new GetUserPositionQuery(userId);
+        var entry = leaderboardQueryService.handle(query);
+
+        return entry.map(leaderboardEntry -> leaderboardEntry.getTotalTimeToAchievePointsMs()).orElse(0L);
+    }
 }

@@ -5,6 +5,7 @@ import com.levelup.journey.platform.microserviceprofiles.competitive.domain.mode
 import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.entities.Rank;
 import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.valueobjects.CompetitiveUserId;
 import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.valueobjects.TotalPoints;
+import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.valueobjects.TotalTimeToAchievePoints;
 import com.levelup.journey.platform.microserviceprofiles.shared.domain.model.aggregates.AuditableAbstractAggregateRoot;
 import jakarta.persistence.*;
 
@@ -28,6 +29,12 @@ public class CompetitiveProfile extends AuditableAbstractAggregateRoot<Competiti
     })
     private TotalPoints totalPoints;
 
+    @Embedded
+    @AttributeOverrides({
+            @AttributeOverride(name = "milliseconds", column = @Column(name = "total_time_to_achieve_points_ms", nullable = false))
+    })
+    private TotalTimeToAchievePoints totalTimeToAchievePoints;
+
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "rank_id", nullable = false)
     private Rank currentRank;
@@ -46,6 +53,7 @@ public class CompetitiveProfile extends AuditableAbstractAggregateRoot<Competiti
     public CompetitiveProfile(CreateCompetitiveProfileCommand command, Rank bronzeRank) {
         this.userId = new CompetitiveUserId(command.userId());
         this.totalPoints = TotalPoints.zero();
+        this.totalTimeToAchievePoints = TotalTimeToAchievePoints.zero();
         this.currentRank = bronzeRank;
     }
 
@@ -59,6 +67,7 @@ public class CompetitiveProfile extends AuditableAbstractAggregateRoot<Competiti
     public CompetitiveProfile(String userId, Integer initialPoints, Rank initialRank) {
         this.userId = new CompetitiveUserId(userId);
         this.totalPoints = new TotalPoints(initialPoints);
+        this.totalTimeToAchievePoints = TotalTimeToAchievePoints.zero();
         this.currentRank = initialRank;
     }
 
@@ -85,6 +94,19 @@ public class CompetitiveProfile extends AuditableAbstractAggregateRoot<Competiti
     }
 
     /**
+     * Update total points and total time from external sources (Leaderboard BC)
+     *
+     * @param newPoints New total points value
+     * @param totalTimeMs Total time to achieve points in milliseconds (will be converted to seconds)
+     * @param newRank The new rank entity based on points
+     */
+    public void syncPointsAndTimeFromLeaderboard(Integer newPoints, Long totalTimeMs, Rank newRank) {
+        this.totalPoints = new TotalPoints(newPoints);
+        this.totalTimeToAchievePoints = TotalTimeToAchievePoints.fromMilliseconds(totalTimeMs);
+        this.currentRank = newRank;
+    }
+
+    /**
      * Update rank entity
      *
      * @param rank The new rank entity
@@ -101,6 +123,10 @@ public class CompetitiveProfile extends AuditableAbstractAggregateRoot<Competiti
 
     public Integer getTotalPoints() {
         return totalPoints.value();
+    }
+
+    public Long getTotalTimeToAchievePointsMs() {
+        return totalTimeToAchievePoints.seconds();
     }
 
     public Rank getCurrentRank() {

@@ -1,5 +1,6 @@
 package com.levelup.journey.platform.microserviceprofiles.competitive.application.internal.commandservices;
 
+import com.levelup.journey.platform.microserviceprofiles.competitive.application.internal.outboundservices.acl.ExternalLeaderboardService;
 import com.levelup.journey.platform.microserviceprofiles.competitive.application.internal.outboundservices.acl.ExternalScoresService;
 import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.aggregates.CompetitiveProfile;
 import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.commands.CreateCompetitiveProfileCommand;
@@ -33,16 +34,19 @@ public class CompetitiveProfileCommandServiceImpl implements CompetitiveProfileC
     private final CompetitiveProfileRepository competitiveProfileRepository;
     private final RankRepository rankRepository;
     private final ExternalScoresService externalScoresService;
+    private final ExternalLeaderboardService externalLeaderboardService;
     private final ApplicationEventPublisher eventPublisher;
 
     public CompetitiveProfileCommandServiceImpl(
             CompetitiveProfileRepository competitiveProfileRepository,
             RankRepository rankRepository,
             ExternalScoresService externalScoresService,
+            ExternalLeaderboardService externalLeaderboardService,
             ApplicationEventPublisher eventPublisher) {
         this.competitiveProfileRepository = competitiveProfileRepository;
         this.rankRepository = rankRepository;
         this.externalScoresService = externalScoresService;
+        this.externalLeaderboardService = externalLeaderboardService;
         this.eventPublisher = eventPublisher;
     }
 
@@ -137,6 +141,10 @@ public class CompetitiveProfileCommandServiceImpl implements CompetitiveProfileC
             return Optional.empty();
         }
 
+        // Fetch total time from Leaderboard BC
+        var totalTimeMs = externalLeaderboardService.fetchTotalTimeToAchievePointsByUserId(command.userId())
+                .orElse(0L);
+
         // Calculate rank based on points
         var rankEnum = CompetitiveRank.fromPoints(totalPoints.get());
         var rank = rankRepository.findByRankName(rankEnum)
@@ -150,12 +158,12 @@ public class CompetitiveProfileCommandServiceImpl implements CompetitiveProfileC
                     return competitiveProfileRepository.save(newProfile);
                 });
 
-        // Sync points
-        profile.syncPointsFromScores(totalPoints.get(), rank);
+        // Sync points and time from Leaderboard BC
+        profile.syncPointsAndTimeFromLeaderboard(totalPoints.get(), totalTimeMs, rank);
         var savedProfile = competitiveProfileRepository.save(profile);
 
-        logger.info("Synchronized competitive profile for user {} with {} points and rank {}",
-                command.userId(), totalPoints.get(), savedProfile.getCurrentRank().getRankName());
+        logger.info("Synchronized competitive profile for user {} with {} points, {} ms total time, and rank {}",
+                command.userId(), totalPoints.get(), totalTimeMs, savedProfile.getCurrentRank().getRankName());
 
         // Publish domain event for other bounded contexts (e.g., Leaderboard BC)
         var event = new CompetitiveProfileUpdatedEvent(
