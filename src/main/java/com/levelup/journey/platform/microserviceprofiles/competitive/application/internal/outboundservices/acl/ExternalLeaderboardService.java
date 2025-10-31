@@ -5,8 +5,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import java.util.Optional;
-
 /**
  * External Leaderboard Service
  * ACL implementation for accessing leaderboard data from Leaderboard bounded context
@@ -19,30 +17,6 @@ public class ExternalLeaderboardService {
 
     public ExternalLeaderboardService(LeaderboardContextFacade leaderboardContextFacade) {
         this.leaderboardContextFacade = leaderboardContextFacade;
-    }
-
-    /**
-     * Fetch total time to achieve points for a specific user from Leaderboard BC
-     *
-     * @param userId User identifier
-     * @return Optional of total time in milliseconds, empty if user not found
-     */
-    public Optional<Long> fetchTotalTimeToAchievePointsByUserId(String userId) {
-        try {
-            Long totalTimeMs = leaderboardContextFacade.getTotalTimeToAchievePointsByUserId(userId);
-
-            if (totalTimeMs == null || totalTimeMs == 0) {
-                logger.debug("No time data found for user: {}", userId);
-                return Optional.empty();
-            }
-
-            logger.debug("Fetched total time for user {}: {} ms", userId, totalTimeMs);
-            return Optional.of(totalTimeMs);
-
-        } catch (Exception e) {
-            logger.error("Error fetching total time for user {}: {}", userId, e.getMessage());
-            return Optional.empty();
-        }
     }
 
     /**
