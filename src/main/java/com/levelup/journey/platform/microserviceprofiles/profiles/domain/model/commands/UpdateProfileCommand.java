@@ -1,5 +1,7 @@
 package com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.commands;
 
+import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.valueobjects.StudentCycle;
+
 import java.util.UUID;
 
 public record UpdateProfileCommand(
@@ -8,6 +10,7 @@ public record UpdateProfileCommand(
         String lastName,
         String username,
         String profileUrl,
-        String provider
+        String provider,
+        StudentCycle cycle
 ) {
 }

@@ -1,11 +1,12 @@
 package com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.aggregates;
 
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.commands.CreateProfileFromUserCommand;
-import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.valueobjects.UserId;
-import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.valueobjects.Username;
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.valueobjects.PersonName;
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.valueobjects.ProfileUrl;
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.valueobjects.Provider;
+import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.valueobjects.StudentCycle;
+import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.valueobjects.UserId;
+import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.valueobjects.Username;
 import com.levelup.journey.platform.microserviceprofiles.shared.domain.model.aggregates.AuditableAbstractAggregateRoot;
 import jakarta.persistence.*;
 import org.springframework.data.domain.Persistable;
@@ -36,6 +37,10 @@ public class Profile extends AuditableAbstractAggregateRoot<Profile> implements 
     @AttributeOverrides({
             @AttributeOverride(name = "value", column = @Column(name = "provider"))})
     private Provider provider;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "student_cycle")
+    private StudentCycle cycle;
 
     @Transient
     private boolean isNew = true;
@@ -83,6 +88,10 @@ public class Profile extends AuditableAbstractAggregateRoot<Profile> implements 
         return provider != null ? provider.value() : null;
     }
 
+    public StudentCycle getCycle() {
+        return cycle;
+    }
+
     public void updateName(String firstName, String lastName) {
         this.name = new PersonName(firstName, lastName);
     }
@@ -100,6 +109,10 @@ public class Profile extends AuditableAbstractAggregateRoot<Profile> implements 
 
     public void updateProvider(String provider) {
         this.provider = new Provider(provider);
+    }
+
+    public void updateCycle(StudentCycle cycle) {
+        this.cycle = cycle;
     }
 
     public String getUserId() {

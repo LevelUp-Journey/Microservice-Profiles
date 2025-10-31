@@ -99,6 +99,7 @@ public class ProfileCommandServiceImpl implements ProfileCommandService {
         profile.updateName(command.firstName(), command.lastName());
         profile.updateProfileUrl(command.profileUrl());
         profile.updateProvider(command.provider());
+        profile.updateCycle(command.cycle());
 
         // Save updated profile
         var savedProfile = profileRepository.save(profile);

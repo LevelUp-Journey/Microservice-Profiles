@@ -13,7 +13,8 @@ public class UpdateProfileCommandFromResourceAssembler {
                 resource.lastName(),
                 resource.username(),
                 resource.profileUrl(),
-                resource.provider()
+                resource.provider(),
+                resource.cycle()
         );
     }
 }
