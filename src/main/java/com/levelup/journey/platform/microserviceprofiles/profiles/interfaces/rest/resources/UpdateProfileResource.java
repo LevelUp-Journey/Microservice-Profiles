@@ -22,9 +22,9 @@ public record UpdateProfileResource(
                 @Schema(description = "User's last name (supports international characters)", example = "González")
         String lastName,
 
-        @Pattern(regexp = "^(?:USER\\d{9}|[a-zA-Z0-9_.-]{3,15})$",
-                 message = "Username must be either auto-generated format (USER + 9 digits) or custom (3-15 alphanumeric characters, underscores, dots, or hyphens)")
-        @Schema(description = "Username (auto-generated USER + 9 digits or custom 3-15 chars)", example = "maria_dev")
+        @Pattern(regexp = "^[a-zA-Z0-9]{1,30}$",
+                 message = "Username must contain only alphanumeric characters (letters and numbers), no spaces, maximum 30 characters")
+        @Schema(description = "Username (alphanumeric only, no spaces, max 30 chars)", example = "mariadev123")
         String username,
 
         @URL(message = "Profile URL must be a valid HTTP or HTTPS URL")
