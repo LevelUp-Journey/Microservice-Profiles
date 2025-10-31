@@ -41,6 +41,12 @@ public class Score extends AuditableAbstractAggregateRoot<Score> {
     @Column(name = "challenge_type", length = 50)
     private String challengeType;
 
+    @Column(name = "execution_time_ms")
+    private Long executionTimeMs;
+
+    @Column(name = "solution_time_seconds")
+    private Long solutionTimeSeconds;
+
     protected Score() {
         // JPA constructor
     }
@@ -54,6 +60,8 @@ public class Score extends AuditableAbstractAggregateRoot<Score> {
         this.source = ScoreSource.CHALLENGE_COMPLETED;
         this.challengeId = new ChallengeId(command.challengeId());
         this.challengeType = command.challengeType();
+        this.executionTimeMs = command.executionTimeMs();
+        this.solutionTimeSeconds = command.solutionTimeSeconds();
     }
 
     // Getters
@@ -75,5 +83,13 @@ public class Score extends AuditableAbstractAggregateRoot<Score> {
 
     public String getChallengeType() {
         return challengeType;
+    }
+
+    public Long getExecutionTimeMs() {
+        return executionTimeMs;
+    }
+
+    public Long getSolutionTimeSeconds() {
+        return solutionTimeSeconds;
     }
 }

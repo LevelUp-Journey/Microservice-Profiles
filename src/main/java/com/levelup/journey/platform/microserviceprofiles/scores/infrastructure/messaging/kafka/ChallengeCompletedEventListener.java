@@ -44,13 +44,18 @@ public class ChallengeCompletedEventListener {
             String challengeType = "CHALLENGE"; // Default type as it's not in the event
             Integer points = eventData.get("experiencePointsEarned").asInt();
 
-            // Extract execution time if available (time taken to complete the challenge)
+            // Extract execution time if available (time taken to run the tests)
             Long executionTimeMs = eventData.has("executionTimeMs")
                     ? eventData.get("executionTimeMs").asLong()
                     : 0L;
 
-            logger.info("Challenge completed by user {} with {} points in {} ms",
-                    userId, points, executionTimeMs);
+            // Extract solution time if available (time taken to complete the challenge)
+            Long solutionTimeSeconds = eventData.has("solutionTimeSeconds")
+                    ? eventData.get("solutionTimeSeconds").asLong()
+                    : 0L;
+
+            logger.info("Challenge completed by user {} with {} points, execution time: {} ms, solution time: {} s",
+                    userId, points, executionTimeMs, solutionTimeSeconds);
 
             // Create command
             var command = new RecordScoreFromChallengeCommand(
@@ -58,15 +63,16 @@ public class ChallengeCompletedEventListener {
                     challengeId,
                     challengeType,
                     points,
-                    executionTimeMs
+                    executionTimeMs,
+                    solutionTimeSeconds
             );
 
             // Execute command
             var score = scoreCommandService.handle(command);
 
             if (score.isPresent()) {
-                logger.info("Score recorded successfully for user: {} with points: {} and execution time: {} ms",
-                        userId, points, executionTimeMs);
+                logger.info("Score recorded successfully for user: {} with points: {}, execution time: {} ms, solution time: {} s",
+                        userId, points, executionTimeMs, solutionTimeSeconds);
             } else {
                 logger.warn("Failed to record score for user: {}", userId);
             }

@@ -12,22 +12,28 @@ import java.util.UUID;
 public record ScoreResource(
         @Schema(description = "Unique score identifier", example = "123e4567-e89b-12d3-a456-426614174000")
         UUID id,
-        
+
         @Schema(description = "User ID who earned the score", example = "a6284ad2-8416-494c-b986-a4381e9de77b")
         String userId,
-        
+
         @Schema(description = "Points earned", example = "100")
         Integer points,
-        
+
         @Schema(description = "Source of the score", example = "CHALLENGE_COMPLETED")
         String source,
-        
+
         @Schema(description = "Challenge ID if applicable", example = "challenge-001")
         String challengeId,
-        
+
         @Schema(description = "Challenge type if applicable", example = "CODING_CHALLENGE")
         String challengeType,
-        
+
+        @Schema(description = "Execution time in milliseconds (test run time)", example = "2354")
+        Long executionTimeMs,
+
+        @Schema(description = "Solution time in seconds (time taken to complete the challenge)", example = "43")
+        Long solutionTimeSeconds,
+
         @Schema(description = "When the score was awarded")
         Date awardedAt
 ) {
