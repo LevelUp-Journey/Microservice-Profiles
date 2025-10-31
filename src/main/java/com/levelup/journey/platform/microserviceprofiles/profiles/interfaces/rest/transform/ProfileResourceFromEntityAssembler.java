@@ -19,6 +19,7 @@ public class ProfileResourceFromEntityAssembler {
                 entity.getProfileUrl(),
                 entity.getProvider(),
                 entity.getFirstName(),
-                entity.getLastName());
+                entity.getLastName(),
+                entity.getCycle());
     }
 }

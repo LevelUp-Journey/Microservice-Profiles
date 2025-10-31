@@ -71,7 +71,8 @@ public class UserRegisteredEventListener {
                         lastName != null ? lastName : "",
                         profile.getUsername(), // Keep existing username
                         profileUrl,
-                        provider
+                        provider,
+                        null // cycle not provided in event
                 );
                 var updatedProfile = profileCommandService.handle(updateCommand);
                 if (updatedProfile.isPresent()) {

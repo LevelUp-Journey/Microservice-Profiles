@@ -1,5 +1,6 @@
 package com.levelup.journey.platform.microserviceprofiles.profiles.interfaces.rest.resources;
 
+import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.valueobjects.StudentCycle;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
@@ -33,6 +34,9 @@ public record UpdateProfileResource(
 
         @Size(max = 50, message = "Provider cannot exceed 50 characters")
         @Schema(description = "Authentication provider", example = "google")
-        String provider
+        String provider,
+
+        @Schema(description = "Student cycle", example = "First")
+        StudentCycle cycle
 ) {
 }
