@@ -5,6 +5,7 @@ import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.q
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.queries.GetProfileByUsernameQuery;
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.queries.GetProfileByIdQuery;
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.queries.GetProfileByUserIdQuery;
+import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.queries.SearchUsersByUsernameQuery;
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.services.ProfileQueryService;
 import com.levelup.journey.platform.microserviceprofiles.profiles.infrastructure.persistence.jpa.repositories.ProfileRepository;
 import org.springframework.stereotype.Service;
@@ -50,5 +51,11 @@ public class ProfileQueryServiceImpl implements ProfileQueryService {
     @Override
     public List<Profile> handle(GetAllProfilesQuery query) {
         return profileRepository.findAll();
+    }
+
+    // inherited javadoc
+    @Override
+    public List<Profile> handle(SearchUsersByUsernameQuery query) {
+        return profileRepository.findByUsernameUsernameContainingIgnoreCase(query.usernamePattern());
     }
 }

@@ -3,11 +3,13 @@ package com.levelup.journey.platform.microserviceprofiles.profiles.interfaces.re
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.queries.GetAllProfilesQuery;
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.queries.GetProfileByIdQuery;
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.queries.GetProfileByUserIdQuery;
+import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.queries.SearchUsersByUsernameQuery;
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.valueobjects.UserId;
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.services.ProfileCommandService;
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.services.ProfileQueryService;
 import com.levelup.journey.platform.microserviceprofiles.profiles.interfaces.rest.resources.ProfileResource;
 import com.levelup.journey.platform.microserviceprofiles.profiles.interfaces.rest.resources.UpdateProfileResource;
+import com.levelup.journey.platform.microserviceprofiles.profiles.interfaces.rest.resources.UserSearchResultResource;
 import com.levelup.journey.platform.microserviceprofiles.profiles.interfaces.rest.transform.ProfileResourceFromEntityAssembler;
 import com.levelup.journey.platform.microserviceprofiles.profiles.interfaces.rest.transform.UpdateProfileCommandFromResourceAssembler;
 import io.swagger.v3.oas.annotations.Operation;
@@ -123,6 +125,40 @@ public class ProfilesController {
                 .map(ProfileResourceFromEntityAssembler::toResourceFromEntity)
                 .toList();
         return ResponseEntity.ok(profileResources);
+    }
+
+    /**
+     * Search users by username pattern
+     * @param username The username pattern to search for (case-insensitive, minimum 2 characters)
+     * @return A list of {@link UserSearchResultResource} containing matching users with fullName, profileUrl, and userId
+     */
+    @GetMapping("/search")
+    @Operation(
+            summary = "Search users by username",
+            description = "Search for users by username pattern (case-insensitive). Returns basic user information including fullName (firstName + lastName), profileUrl, and userId"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Users found matching the search criteria"),
+            @ApiResponse(responseCode = "400", description = "Invalid search criteria - username pattern must be at least 2 characters"),
+            @ApiResponse(responseCode = "404", description = "No users found matching the search criteria")
+    })
+    public ResponseEntity<List<UserSearchResultResource>> searchUsersByUsername(
+            @RequestParam(name = "username") String username) {
+        try {
+            var searchQuery = new SearchUsersByUsernameQuery(username);
+            var profiles = profileQueryService.handle(searchQuery);
+            if (profiles.isEmpty()) return ResponseEntity.notFound().build();
+            var searchResults = profiles.stream()
+                    .map(profile -> new UserSearchResultResource(
+                            profile.getUserId(),
+                            profile.getFullName(),
+                            profile.getProfileUrl()
+                    ))
+                    .toList();
+            return ResponseEntity.ok(searchResults);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        }
     }
 
 }

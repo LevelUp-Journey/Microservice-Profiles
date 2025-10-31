@@ -5,6 +5,7 @@ import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.q
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.queries.GetProfileByUsernameQuery;
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.queries.GetProfileByIdQuery;
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.queries.GetProfileByUserIdQuery;
+import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.queries.SearchUsersByUsernameQuery;
 
 import java.util.List;
 import java.util.Optional;
@@ -44,4 +45,12 @@ public interface ProfileQueryService {
      * @return A list of {@link Profile} instances
      */
     List<Profile> handle(GetAllProfilesQuery query);
+
+    /**
+     * Handle Search Users By Username Query
+     *
+     * @param query The {@link SearchUsersByUsernameQuery} Query
+     * @return A list of {@link Profile} instances matching the username pattern
+     */
+    List<Profile> handle(SearchUsersByUsernameQuery query);
 }
