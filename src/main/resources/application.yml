@@ -1,6 +1,6 @@
 spring:
   application:
-    name: microservice-profiles
+    name: PROFILE_SERVICE
 
 # ===================================================
 # PostgreSQL Configuration
@@ -80,3 +80,9 @@ app:
   jwt:
     secret: ${JWT_SECRET:d3ee61e796a04895924719559f19a19de2e31d4c330208d8c410c2d63c89de9b5aadc298404a843d521569e812c599bda47b65d4c7fce5a8ded21f24d8df59dc}
     expiration: ${JWT_EXPIRATION:86400000}
+
+# Configuration for Service Discovery
+eureka:
+  client:
+    service-url:
+      defaultZone: ${SERVICE_DISCOVERY_URL}
