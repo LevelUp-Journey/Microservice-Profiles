@@ -1,6 +1,11 @@
+# ===================================================
+# Spring Application Configuration
+# ===================================================
 spring:
   application:
-    name: PROFILE_SERVICE
+    name: profile-service
+  profiles:
+    active: local
 
 # ===================================================
 # PostgreSQL Configuration
@@ -51,17 +56,21 @@ springdoc:
     enabled: true
     disable-swagger-default-url: true
 
+# ===================================================
 # OpenAPI Documentation
+# ===================================================
 documentation:
   application:
     description: Level Up Journey - Profiles Management Microservice for user profile and gamification features.
     version: 1.0.0
 
+
 # ===================================================
 # Server Configuration
 # ===================================================
 server:
-  port: ${PORT:8082}
+  port: 8082
+
 
 # ===================================================
 # CORS Configuration
@@ -81,8 +90,35 @@ app:
     secret: ${JWT_SECRET:d3ee61e796a04895924719559f19a19de2e31d4c330208d8c410c2d63c89de9b5aadc298404a843d521569e812c599bda47b65d4c7fce5a8ded21f24d8df59dc}
     expiration: ${JWT_EXPIRATION:86400000}
 
-# Configuration for Service Discovery
+# ===================================================
+# Eureka Client Configuration
+# ===================================================
 eureka:
   client:
-    service-url:
-      defaultZone: ${SERVICE_DISCOVERY_URL}
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka/
+    register-with-eureka: true
+    fetch-registry: true
+  instance:
+    prefer-ip-address: true
+    ip-address: 127.0.0.1
+    hostname: localhost
+    instance-id: ${spring.application.name}:${server.port}
+    status-page-url: http://localhost:${server.port}/swagger-ui/index.html
+    lease-renewal-interval-in-seconds: 30
+    lease-expiration-duration-in-seconds: 90
+
+# ===================================================
+# Management & Actuator Configuration
+# ===================================================
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: when-authorized
+  health:
+    defaults:
+      enabled: true
