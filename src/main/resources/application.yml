@@ -95,16 +95,19 @@ app:
 # ===================================================
 eureka:
   client:
-    serviceUrl:
-      defaultZone: http://localhost:8761/eureka/
+    service-url:
+      defaultZone: ${SERVICE_DISCOVERY_URL}
     register-with-eureka: true
     fetch-registry: true
   instance:
+    ip-address: ${SERVER_IP}
     prefer-ip-address: true
-    ip-address: 127.0.0.1
-    hostname: localhost
-    instance-id: ${spring.application.name}:${server.port}
-    status-page-url: http://localhost:${server.port}/swagger-ui/index.html
+
+    status-page-url: http://${eureka.instance.ip-address}:8081/swagger-ui/index.html
+    health-check-url: http://${eureka.instance.ip-address}:8081/actuator/health
+
+    instance-id: ${spring.application.name}:${server.port:8081}
+
     lease-renewal-interval-in-seconds: 30
     lease-expiration-duration-in-seconds: 90
 
