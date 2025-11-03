@@ -7,9 +7,9 @@ spring:
   profiles:
     active: local
 
-# ===================================================
-# PostgreSQL Configuration
-# ===================================================
+  # ===================================================
+  # PostgreSQL Configuration
+  # ===================================================
   datasource:
     url: ${POSTGRES_URL}
     username: ${POSTGRES_USERNAME}
@@ -25,25 +25,53 @@ spring:
         format_sql: false
     show-sql: true
 
-# ===================================================
-# Docker Compose Configuration
-# ===================================================
+  # ===================================================
+  # Docker Compose Configuration
+  # ===================================================
   docker:
     compose:
       enabled: false
 
-# ===================================================
-# Kafka Configuration
-# ===================================================
+  # ===================================================
+  # Kafka Configuration (Estructura igual a iam-service)
+  # ===================================================
   kafka:
-    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
+
+    # --- Propiedades globales de seguridad (válidas para producer y consumer) ---
+    properties:
+      security.protocol: SASL_SSL
+      sasl.mechanism: PLAIN
+      sasl.jaas.config: 'org.apache.kafka.common.security.plain.PlainLoginModule required username="$ConnectionString" password="${KAFKA_CONNECTION_STRING}";'
+
+    # --- Configuración del Productor ---
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        max.block.ms: 2000
+        request.timeout.ms: 2000
+        delivery.timeout.ms: 3000
+        spring:
+          json:
+            add:
+              type:
+                headers: false
+
+    # --- Configuración del Consumidor ---
     consumer:
       group-id: ${KAFKA_CONSUMER_GROUP_ID:profile-service-group}
-      topic:
-        user-registered: ${KAFKA_TOPIC_USER_REGISTERED:iam.user.registered}
-        challenge-completed: ${KAFKA_TOPIC_CHALLENGE_COMPLETED:challenge.completed}
       auto-offset-reset: earliest
       enable-auto-commit: true
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring:
+          json:
+            trusted:
+              packages: '*'
+            type:
+              mapping: 'userRegistered:com.levelup.journey.platform.microserviceprofiles.profiles.infrastructure.messaging.dto.UserRegisteredEvent'
 
 # ===================================================
 # Swagger & OpenAPI Configuration
@@ -64,30 +92,29 @@ documentation:
     description: Level Up Journey - Profiles Management Microservice for user profile and gamification features.
     version: 1.0.0
 
-
 # ===================================================
 # Server Configuration
 # ===================================================
 server:
-  port: 8082
-
+  port: ${PORT:8082}
 
 # ===================================================
-# CORS Configuration
+# App Custom Configuration
 # ===================================================
 app:
+  kafka:
+    enabled: ${KAFKA_ENABLED:true}
+    topics:
+      user-registered: ${KAFKA_TOPIC_USER_REGISTERED:iam.user.registered}
+      challenge-completed: ${KAFKA_TOPIC_CHALLENGE_COMPLETED:challenge.completed}
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:8080}
     allowed-methods: ${CORS_ALLOWED_METHODS:GET,POST,PUT,DELETE,PATCH,OPTIONS}
     allowed-headers: ${CORS_ALLOWED_HEADERS:*}
     allow-credentials: ${CORS_ALLOW_CREDENTIALS:true}
     max-age: ${CORS_MAX_AGE:3600}
-
-# ===================================================
-# JWT Configuration
-# ===================================================
   jwt:
-    secret: ${JWT_SECRET:d3ee61e796a04895924719559f19a19de2e31d4c330208d8c410c2d63c89de9b5aadc298404a843d521569e812c599bda47b65d4c7fce5a8ded21f24d8df59dc}
+    secret: ${JWT_SECRET}
     expiration: ${JWT_EXPIRATION:86400000}
 
 # ===================================================
@@ -100,14 +127,11 @@ eureka:
     register-with-eureka: true
     fetch-registry: true
   instance:
-    ip-address: ${SERVER_IP}
-    prefer-ip-address: true
-
-    status-page-url: http://${eureka.instance.ip-address}:8081/swagger-ui/index.html
-    health-check-url: http://${eureka.instance.ip-address}:8081/actuator/health
-
-    instance-id: ${spring.application.name}:${server.port:8081}
-
+    prefer-ip-address: false
+    hostname: ${HOSTNAME:${spring.application.name}}
+    status-page-url: http://${eureka.instance.hostname}:${server.port:8082}/swagger-ui/index.html
+    health-check-url: http://${eureka.instance.hostname}:${server.port:8082}/actuator/health
+    instance-id: ${spring.application.name}:${server.port:8082}
     lease-renewal-interval-in-seconds: 30
     lease-expiration-duration-in-seconds: 90
 
