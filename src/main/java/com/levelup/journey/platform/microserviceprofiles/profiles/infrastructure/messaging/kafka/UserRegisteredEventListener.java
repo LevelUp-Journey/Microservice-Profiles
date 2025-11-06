@@ -1,106 +1,121 @@
 package com.levelup.journey.platform.microserviceprofiles.profiles.infrastructure.messaging.kafka;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.commands.CreateProfileFromUserCommand;
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.commands.UpdateProfileCommand;
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.queries.GetProfileByUserIdQuery;
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.valueobjects.UserId;
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.services.ProfileCommandService;
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.services.ProfileQueryService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.levelup.journey.platform.microserviceprofiles.profiles.infrastructure.messaging.dto.UserRegisteredEvent;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.support.KafkaHeaders;
+import org.springframework.messaging.handler.annotation.Header;
+import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
-
-import java.util.Map;
 
 /**
  * Kafka Event Listener for User Registration Events
- * Listens to the iam.user.registered topic and creates or updates profiles automatically
+ * Listens to the user-registered topic and creates or updates profiles automatically
+ * Only enabled when app.kafka.enabled=true
  */
 @Component
+@Slf4j
+@ConditionalOnProperty(name = "app.kafka.enabled", havingValue = "true", matchIfMissing = true)
 public class UserRegisteredEventListener {
-
-    private static final Logger logger = LoggerFactory.getLogger(UserRegisteredEventListener.class);
 
     private final ProfileCommandService profileCommandService;
     private final ProfileQueryService profileQueryService;
-    private final ObjectMapper objectMapper;
 
-    public UserRegisteredEventListener(ProfileCommandService profileCommandService, ProfileQueryService profileQueryService, ObjectMapper objectMapper) {
+    public UserRegisteredEventListener(
+            ProfileCommandService profileCommandService, 
+            ProfileQueryService profileQueryService) {
         this.profileCommandService = profileCommandService;
         this.profileQueryService = profileQueryService;
-        this.objectMapper = objectMapper;
     }
 
     /**
      * Listens to user registration events from IAM service
-     * Topic: iam.user.registered
+     * Topic: configured in app.kafka.topics.user-registered
      *
-     * @param message The JSON message from Kafka
+     * @param event The UserRegisteredEvent from Kafka
+     * @param topic The topic name
+     * @param partition The partition number
+     * @param offset The offset in the partition
      */
-    @KafkaListener(topics = "${spring.kafka.consumer.topic.user-registered}", groupId = "${spring.kafka.consumer.group-id}")
-    public void handleUserRegistered(String message) {
+    @KafkaListener(
+        topics = "${app.kafka.topics.user-registered}",
+        groupId = "${spring.kafka.consumer.group-id}",
+        containerFactory = "kafkaListenerContainerFactory"
+    )
+    public void handleUserRegistered(
+            @Payload UserRegisteredEvent event,
+            @Header(KafkaHeaders.RECEIVED_TOPIC) String topic,
+            @Header(KafkaHeaders.RECEIVED_PARTITION) int partition,
+            @Header(KafkaHeaders.OFFSET) long offset
+    ) {
+        log.info("📥 Received UserRegistered event: userId={}, email={}, username={}, topic={}, partition={}, offset={}", 
+            event.getUserId(), event.getEmail(), event.getUsername(), topic, partition, offset);
+        
         try {
-            logger.info("Received user registration event: {}", message);
+            // Validate event data
+            if (event.getUserId() == null || event.getUserId().trim().isEmpty()) {
+                log.error("❌ Invalid event: userId is null or empty");
+                throw new IllegalArgumentException("userId cannot be null or empty");
+            }
 
-            // Parse JSON message
-            @SuppressWarnings("unchecked")
-            Map<String, Object> event = objectMapper.readValue(message, Map.class);
-
-            // Extract data from event
-            String userId = (String) event.get("userId");
-            String firstName = (String) event.get("firstName");
-            String lastName = (String) event.get("lastName");
-            String profileUrl = (String) event.get("profileUrl");
-            String provider = (String) event.get("provider");
-
-            // Log extracted data for debugging
-            logger.info("Extracted from Kafka event - userId: {}, firstName: '{}', lastName: '{}', profileUrl: '{}', provider: '{}'",
-                    userId, firstName, lastName, profileUrl, provider);
-
-            var userIdVO = new UserId(userId);
+            var userIdVO = new UserId(event.getUserId());
             var existingProfile = profileQueryService.handle(new GetProfileByUserIdQuery(userIdVO));
 
             if (existingProfile.isPresent()) {
                 // Update existing profile
                 var profile = existingProfile.get();
+                log.info("🔄 Updating existing profile for userId={}, profileId={}", 
+                    event.getUserId(), profile.getId());
+                
                 var updateCommand = new UpdateProfileCommand(
                         profile.getId(),
-                        firstName != null ? firstName : "",
-                        lastName != null ? lastName : "",
+                        event.getFirstName() != null ? event.getFirstName() : "",
+                        event.getLastName() != null ? event.getLastName() : "",
                         profile.getUsername(), // Keep existing username
-                        profileUrl,
-                        provider,
+                        event.getProfileUrl(),
+                        event.getProvider(),
                         null // cycle not provided in event
                 );
+                
                 var updatedProfile = profileCommandService.handle(updateCommand);
                 if (updatedProfile.isPresent()) {
-                    logger.info("Successfully updated profile for user ID: {} with profileUrl: '{}'",
-                            userId, profileUrl);
+                    log.info("✅ Successfully updated profile for userId={}, profileId={}", 
+                        event.getUserId(), profile.getId());
                 } else {
-                    logger.warn("Failed to update profile for user ID: {}", userId);
+                    log.warn("⚠️ Failed to update profile for userId={}", event.getUserId());
                 }
             } else {
                 // Create new profile
+                log.info("➕ Creating new profile for userId={}", event.getUserId());
+                
                 var createCommand = new CreateProfileFromUserCommand(
-                        userId,
-                        firstName != null ? firstName : "",
-                        lastName != null ? lastName : "",
-                        profileUrl,
-                        provider
+                        event.getUserId(),
+                        event.getFirstName() != null ? event.getFirstName() : "",
+                        event.getLastName() != null ? event.getLastName() : "",
+                        event.getProfileUrl(),
+                        event.getProvider()
                 );
+                
                 var profile = profileCommandService.handle(createCommand);
                 if (profile.isPresent()) {
-                    logger.info("Successfully created profile for user ID: {} with username: {}",
-                            userId, profile.get().getUsername());
+                    log.info("✅ Successfully created profile for userId={}, username={}, profileId={}", 
+                        event.getUserId(), profile.get().getUsername(), profile.get().getId());
                 } else {
-                    logger.warn("Failed to create profile for user ID: {}", userId);
+                    log.warn("⚠️ Failed to create profile for userId={}", event.getUserId());
                 }
             }
-
         } catch (Exception e) {
-            logger.error("Error processing user registration event: {}", e.getMessage(), e);
+            log.error("❌ Error processing UserRegistered event for userId={}: {}", 
+                event.getUserId(), e.getMessage(), e);
+            // Re-lanzar para que el error handler lo maneje con reintentos
+            throw new RuntimeException("Failed to process UserRegistered event", e);
         }
     }
 }
