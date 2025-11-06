@@ -1,10 +1,10 @@
-package com.levelupjourney.microserviceprofiles.shared.infrastructure.persistence.jpa.configuration.strategy;
+package com.levelup.journey.platform.microserviceprofiles.shared.infrastructure.persistence.jpa.configuration.strategy;
 
 import org.hibernate.boot.model.naming.Identifier;
 import org.hibernate.boot.model.naming.PhysicalNamingStrategy;
 import org.hibernate.engine.jdbc.env.spi.JdbcEnvironment;
 
-import static io.github.encryptorcode.pluralize.Pluralize.pluralize;
+import io.github.encryptorcode.pluralize.Pluralize;
 
 /**
  * SnakeCase Physical Naming Strategy
@@ -87,7 +87,7 @@ public class SnakeCaseWithPluralizedTablePhysicalNamingStrategy implements Physi
      * @return Pluralized Identifier
      */
     private Identifier toPlural(final Identifier identifier) {
-        final String newName = pluralize(identifier.getText());
+        final String newName = Pluralize.pluralize(identifier.getText());
         return Identifier.toIdentifier(newName);
     }
 }
