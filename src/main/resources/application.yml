@@ -128,11 +128,12 @@ eureka:
         register-with-eureka: true
         fetch-registry: true
     instance:
-        prefer-ip-address: false
-        hostname: ${HOSTNAME:${spring.application.name}}
-        status-page-url: http://${eureka.instance.hostname}:${server.port:8082}/swagger-ui/index.html
-        health-check-url: http://${eureka.instance.hostname}:${server.port:8082}/actuator/health
-        instance-id: ${spring.application.name}:${server.port:8082}
+        prefer-ip-address: true
+        # this options is only for local development
+        # hostname: ${HOSTNAME:${spring.application.name}}
+        # status-page-url: http://${eureka.instance.hostname}:${server.port:8082}/swagger-ui/index.html
+        # health-check-url: http://${eureka.instance.hostname}:${server.port:8082}/actuator/health
+        # instance-id: ${spring.application.name}:${server.port:8082}
         lease-renewal-interval-in-seconds: 30
         lease-expiration-duration-in-seconds: 90
 
