@@ -124,18 +124,20 @@ app:
 eureka:
     client:
         service-url:
-            defaultZone: ${SERVICE_DISCOVERY_URL}
+            defaultZone: ${SERVICE_DISCOVERY_URL:http://service-discovery:8761/eureka/}
         register-with-eureka: true
         fetch-registry: true
+        registry-fetch-interval-seconds: 10 # sincroniza lista de servicios cada 10s
+        healthcheck:
+            enabled: true # usa health endpoint para validación real
+
     instance:
         prefer-ip-address: true
-        # this options is only for local development
-        # hostname: ${HOSTNAME:${spring.application.name}}
-        # status-page-url: http://${eureka.instance.hostname}:${server.port:8082}/swagger-ui/index.html
-        # health-check-url: http://${eureka.instance.hostname}:${server.port:8082}/actuator/health
-        # instance-id: ${spring.application.name}:${server.port:8082}
-        lease-renewal-interval-in-seconds: 30
-        lease-expiration-duration-in-seconds: 90
+        lease-renewal-interval-in-seconds: 10 # envía heartbeat cada 10s
+        lease-expiration-duration-in-seconds: 30 # Eureka espera 30s antes de eliminarlo
+        instance-id: ${spring.application.name}:${server.port}:${random.value}
+        metadata-map:
+            zone: default
 
 # ===================================================
 # Management & Actuator Configuration
