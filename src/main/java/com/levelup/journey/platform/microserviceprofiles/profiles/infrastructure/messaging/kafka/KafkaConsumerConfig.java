@@ -31,13 +31,13 @@ public class KafkaConsumerConfig {
     @Value("${spring.kafka.bootstrap-servers}")
     private String bootstrapServers;
 
-    @Value("${spring.kafka.properties.security.protocol}")
+    @Value("${spring.kafka.properties.security.protocol:PLAINTEXT}")
     private String securityProtocol;
 
-    @Value("${spring.kafka.properties.sasl.mechanism}")
+    @Value("${spring.kafka.properties.sasl.mechanism:#{null}}")
     private String saslMechanism;
 
-    @Value("${spring.kafka.properties.sasl.jaas.config}")
+    @Value("${spring.kafka.properties.sasl.jaas.config:#{null}}")
     private String saslJaasConfig;
 
     @Value("${spring.kafka.consumer.group-id}")
@@ -53,10 +53,16 @@ public class KafkaConsumerConfig {
         props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
         props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, true);
         
-        // Seguridad SASL_SSL para Azure Event Hubs
+        // Seguridad (PLAINTEXT para local, SASL_SSL para Azure Event Hubs)
         props.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, securityProtocol);
-        props.put(SaslConfigs.SASL_MECHANISM, saslMechanism);
-        props.put(SaslConfigs.SASL_JAAS_CONFIG, saslJaasConfig);
+
+        // Solo agregar configuración SASL si está presente (para Azure Event Hubs)
+        if (saslMechanism != null && !saslMechanism.isEmpty()) {
+            props.put(SaslConfigs.SASL_MECHANISM, saslMechanism);
+        }
+        if (saslJaasConfig != null && !saslJaasConfig.isEmpty()) {
+            props.put(SaslConfigs.SASL_JAAS_CONFIG, saslJaasConfig);
+        }
         
         // Deserializers
         props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
@@ -68,8 +74,8 @@ public class KafkaConsumerConfig {
         props.put(JsonDeserializer.VALUE_DEFAULT_TYPE, 
             "com.levelup.journey.platform.microserviceprofiles.profiles.infrastructure.messaging.dto.UserRegisteredEvent");
         
-        log.info("✅ Kafka Consumer configured with SASL_SSL - Bootstrap: {}, GroupId: {}", 
-            bootstrapServers, groupId);
+        log.info("✅ Kafka Consumer configured - Protocol: {}, Bootstrap: {}, GroupId: {}",
+            securityProtocol, bootstrapServers, groupId);
         
         return new DefaultKafkaConsumerFactory<>(props);
     }
