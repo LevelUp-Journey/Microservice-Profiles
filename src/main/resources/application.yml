@@ -40,9 +40,9 @@ spring:
 
         # --- Propiedades globales de seguridad (válidas para producer y consumer) ---
         properties:
-            security.protocol: SASL_SSL
-            sasl.mechanism: PLAIN
-            sasl.jaas.config: 'org.apache.kafka.common.security.plain.PlainLoginModule required username="$ConnectionString" password="${KAFKA_CONNECTION_STRING}";'
+            security.protocol: ${KAFKA_SECURITY_PROTOCOL:PLAINTEXT}
+            sasl.mechanism: ${KAFKA_SASL_MECHANISM:}
+            sasl.jaas.config: ${KAFKA_SASL_JAAS_CONFIG:}
 
         # --- Configuración del Productor ---
         producer:
