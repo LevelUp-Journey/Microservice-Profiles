@@ -13,7 +13,6 @@ import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.listener.DefaultErrorHandler;
-import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.springframework.util.backoff.FixedBackOff;
 
 import java.util.HashMap;
@@ -64,15 +63,10 @@ public class KafkaConsumerConfig {
             props.put(SaslConfigs.SASL_JAAS_CONFIG, saslJaasConfig);
         }
         
-        // Deserializers
+        // Deserializers - Usar StringDeserializer para permitir que cada listener parsee manualmente
+        // Esto permite tener diferentes tipos de eventos en diferentes topics
         props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class);
-        
-        // CRÍTICO: Configuración del JsonDeserializer para evitar errores de tipo
-        props.put(JsonDeserializer.TRUSTED_PACKAGES, "*");
-        props.put(JsonDeserializer.USE_TYPE_INFO_HEADERS, false);
-        props.put(JsonDeserializer.VALUE_DEFAULT_TYPE, 
-            "com.levelup.journey.platform.microserviceprofiles.profiles.infrastructure.messaging.dto.UserRegisteredEvent");
+        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         
         log.info("✅ Kafka Consumer configured - Protocol: {}, Bootstrap: {}, GroupId: {}",
             securityProtocol, bootstrapServers, groupId);
