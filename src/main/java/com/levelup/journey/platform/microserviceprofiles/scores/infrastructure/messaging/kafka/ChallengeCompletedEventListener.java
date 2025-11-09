@@ -45,6 +45,10 @@ public class ChallengeCompletedEventListener {
             String challengeType = "CHALLENGE"; // Default type as it's not in the event
             Integer points = eventData.get("experiencePointsEarned").asInt();
 
+            // Check if challenge was already completed
+            boolean alreadyCompleted = eventData.has("alreadyCompleted")
+                    && eventData.get("alreadyCompleted").asBoolean();
+
             // Extract execution time if available (time taken to run the tests)
             Long executionTimeMs = eventData.has("executionTimeMs")
                     ? eventData.get("executionTimeMs").asLong()
@@ -55,7 +59,16 @@ public class ChallengeCompletedEventListener {
                     ? eventData.get("solutionTimeSeconds").asLong()
                     : 0L;
 
-            logger.info("📥 Parsed event: studentId={}, challengeId={}, points={}", userId, challengeId, points);
+            logger.info("📥 Parsed event: studentId={}, challengeId={}, points={}, alreadyCompleted={}",
+                    userId, challengeId, points, alreadyCompleted);
+
+            // Skip score assignment if challenge was already completed
+            if (alreadyCompleted) {
+                logger.info("⏭️ Challenge {} already completed by user {}. Skipping score assignment.",
+                        challengeId, userId);
+                return;
+            }
+
             logger.info("✅ Challenge completed by user {} with {} points, execution time: {} ms, solution time: {} s",
                     userId, points, executionTimeMs, solutionTimeSeconds);
 
