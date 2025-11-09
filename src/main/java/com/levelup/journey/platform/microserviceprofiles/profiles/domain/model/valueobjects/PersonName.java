@@ -6,8 +6,8 @@ import java.util.regex.Pattern;
 @Embeddable
 public record PersonName(String firstName, String lastName) {
 
-    private static final Pattern VALID_NAME_PATTERN = Pattern.compile("^[A-Za-zÁáÉéÍíÓóÚúÑñÜü\\s\\-]{1,20}$");
-    private static final String INVALID_NAME_MESSAGE = "Name must contain only letters, accents, spaces, and hyphens, with maximum 20 characters";
+    private static final Pattern VALID_NAME_PATTERN = Pattern.compile("^[A-Za-z0-9ÁáÉéÍíÓóÚúÑñÜü\\s\\-_.]{1,30}$");
+    private static final String INVALID_NAME_MESSAGE = "Name must contain only letters, numbers, accents, spaces, periods, hyphens, and underscores, with maximum 30 characters";
 
     public PersonName() {
         this(null, null);
