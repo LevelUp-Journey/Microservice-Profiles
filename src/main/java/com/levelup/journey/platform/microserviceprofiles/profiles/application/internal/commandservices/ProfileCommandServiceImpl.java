@@ -4,10 +4,12 @@ import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.a
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.commands.CreateProfileFromUserCommand;
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.commands.UpdateProfileCommand;
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.events.ProfileCreatedEvent;
+import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.events.ProfileRegisteredEvent;
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.valueobjects.UserId;
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.valueobjects.Username;
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.services.ProfileCommandService;
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.services.UsernameGeneratorService;
+import com.levelup.journey.platform.microserviceprofiles.profiles.infrastructure.messaging.kafka.ProfileRegisteredKafkaPublisher;
 import com.levelup.journey.platform.microserviceprofiles.profiles.infrastructure.persistence.jpa.repositories.ProfileRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,6 +29,7 @@ public class ProfileCommandServiceImpl implements ProfileCommandService {
     private final ProfileRepository profileRepository;
     private final UsernameGeneratorService usernameGeneratorService;
     private final ApplicationEventPublisher eventPublisher;
+    private final ProfileRegisteredKafkaPublisher profileRegisteredKafkaPublisher;
 
     /**
      * Constructor
@@ -34,13 +37,16 @@ public class ProfileCommandServiceImpl implements ProfileCommandService {
      * @param profileRepository The {@link ProfileRepository} instance
      * @param usernameGeneratorService The {@link UsernameGeneratorService} instance
      * @param eventPublisher The {@link ApplicationEventPublisher} instance for domain events
+     * @param profileRegisteredKafkaPublisher The {@link ProfileRegisteredKafkaPublisher} instance for Kafka events
      */
     public ProfileCommandServiceImpl(ProfileRepository profileRepository,
                                    UsernameGeneratorService usernameGeneratorService,
-                                   ApplicationEventPublisher eventPublisher) {
+                                   ApplicationEventPublisher eventPublisher,
+                                   ProfileRegisteredKafkaPublisher profileRegisteredKafkaPublisher) {
         this.profileRepository = profileRepository;
         this.usernameGeneratorService = usernameGeneratorService;
         this.eventPublisher = eventPublisher;
+        this.profileRegisteredKafkaPublisher = profileRegisteredKafkaPublisher;
     }
 
     // inherited javadoc
@@ -61,8 +67,8 @@ public class ProfileCommandServiceImpl implements ProfileCommandService {
         var profile = new Profile(command, username);
         var savedProfile = profileRepository.save(profile);
 
-        // Publish domain event for other bounded contexts to react
-        var event = new ProfileCreatedEvent(
+        // Publish internal domain event for other bounded contexts to react (Spring ApplicationEventPublisher)
+        var profileCreatedEvent = new ProfileCreatedEvent(
                 savedProfile.getUserId(),
                 savedProfile.getFirstName(),
                 savedProfile.getLastName(),
@@ -70,10 +76,20 @@ public class ProfileCommandServiceImpl implements ProfileCommandService {
                 savedProfile.getProfileUrl(),
                 savedProfile.getProvider()
         );
-        eventPublisher.publishEvent(event);
+        eventPublisher.publishEvent(profileCreatedEvent);
 
         logger.info("Profile created for user ID: {} with username: {}. ProfileCreatedEvent published.",
                 savedProfile.getUserId(), savedProfile.getUsername());
+
+        // Publish Kafka event to community-registration topic for external microservices
+        var profileRegisteredEvent = new ProfileRegisteredEvent(
+                savedProfile.getUserId(),
+                savedProfile.getId().toString()
+        );
+        profileRegisteredKafkaPublisher.publish(profileRegisteredEvent);
+
+        logger.info("ProfileRegisteredEvent published to Kafka - userId: {}, profileId: {}",
+                savedProfile.getUserId(), savedProfile.getId());
 
         return Optional.of(savedProfile);
     }
