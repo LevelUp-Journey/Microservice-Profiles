@@ -2,6 +2,7 @@ package com.levelup.journey.platform.microserviceprofiles.competitive.interfaces
 
 import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.commands.SyncCompetitiveProfileFromScoresCommand;
 import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.queries.GetCompetitiveProfileByUserIdQuery;
+import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.queries.GetCompetitiveProfileByUsernameQuery;
 import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.queries.GetUsersByRankQuery;
 import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.valueobjects.CompetitiveRank;
 import com.levelup.journey.platform.microserviceprofiles.competitive.domain.services.CompetitiveProfileCommandService;
@@ -63,6 +64,30 @@ public class CompetitiveProfilesController {
             @PathVariable String userId) {
 
         var query = new GetCompetitiveProfileByUserIdQuery(userId);
+        var profile = competitiveProfileQueryService.handle(query);
+
+        if (profile.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        var resource = assembler.toResourceFromEntity(profile.get());
+        return ResponseEntity.ok(resource);
+    }
+
+    /**
+     * Get competitive profile by username
+     */
+    @GetMapping("/username/{username}")
+    @Operation(summary = "Get competitive profile by username", description = "Retrieves a user's competitive profile by their username")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Competitive profile found"),
+            @ApiResponse(responseCode = "404", description = "Competitive profile not found for the given username")
+    })
+    public ResponseEntity<CompetitiveProfileResource> getCompetitiveProfileByUsername(
+            @Parameter(description = "Username to search for", example = "john_doe")
+            @PathVariable String username) {
+
+        var query = new GetCompetitiveProfileByUsernameQuery(username);
         var profile = competitiveProfileQueryService.handle(query);
 
         if (profile.isEmpty()) {

@@ -25,4 +25,12 @@ public interface ProfilesContextFacade {
      * @return The profile ID, or null if not found
      */
     String getProfileIdByUserId(String userId);
+
+    /**
+     * Get user ID by username
+     *
+     * @param username The username to search for
+     * @return The user ID, or null if not found
+     */
+    String getUserIdByUsername(String username);
 }

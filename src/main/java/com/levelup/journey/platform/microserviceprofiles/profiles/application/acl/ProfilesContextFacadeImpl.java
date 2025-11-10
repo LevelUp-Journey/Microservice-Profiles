@@ -1,7 +1,9 @@
 package com.levelup.journey.platform.microserviceprofiles.profiles.application.acl;
 
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.queries.GetProfileByUserIdQuery;
+import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.queries.GetProfileByUsernameQuery;
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.valueobjects.UserId;
+import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.valueobjects.Username;
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.services.ProfileQueryService;
 import com.levelup.journey.platform.microserviceprofiles.profiles.interfaces.acl.ProfilesContextFacade;
 import org.springframework.stereotype.Service;
@@ -31,5 +33,12 @@ public class ProfilesContextFacadeImpl implements ProfilesContextFacade {
         var query = new GetProfileByUserIdQuery(new UserId(userId));
         var profile = profileQueryService.handle(query);
         return profile.map(p -> p.getId().toString()).orElse(null);
+    }
+
+    @Override
+    public String getUserIdByUsername(String username) {
+        var query = new GetProfileByUsernameQuery(new Username(username));
+        var profile = profileQueryService.handle(query);
+        return profile.map(p -> p.getUserId()).orElse(null);
     }
 }

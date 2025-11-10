@@ -3,11 +3,13 @@ package com.levelup.journey.platform.microserviceprofiles.competitive.applicatio
 import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.aggregates.CompetitiveProfile;
 import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.queries.GetAllCompetitiveProfilesQuery;
 import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.queries.GetCompetitiveProfileByUserIdQuery;
+import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.queries.GetCompetitiveProfileByUsernameQuery;
 import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.queries.GetUsersByRankQuery;
 import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.valueobjects.CompetitiveUserId;
 import com.levelup.journey.platform.microserviceprofiles.competitive.domain.services.CompetitiveProfileQueryService;
 import com.levelup.journey.platform.microserviceprofiles.competitive.infrastructure.persistence.jpa.repositories.CompetitiveProfileRepository;
 import com.levelup.journey.platform.microserviceprofiles.competitive.infrastructure.persistence.jpa.repositories.RankRepository;
+import com.levelup.journey.platform.microserviceprofiles.profiles.interfaces.acl.ProfilesContextFacade;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.PageRequest;
@@ -27,12 +29,15 @@ public class CompetitiveProfileQueryServiceImpl implements CompetitiveProfileQue
     private static final Logger logger = LoggerFactory.getLogger(CompetitiveProfileQueryServiceImpl.class);
     private final CompetitiveProfileRepository competitiveProfileRepository;
     private final RankRepository rankRepository;
+    private final ProfilesContextFacade profilesContextFacade;
 
     public CompetitiveProfileQueryServiceImpl(
             CompetitiveProfileRepository competitiveProfileRepository,
-            RankRepository rankRepository) {
+            RankRepository rankRepository,
+            ProfilesContextFacade profilesContextFacade) {
         this.competitiveProfileRepository = competitiveProfileRepository;
         this.rankRepository = rankRepository;
+        this.profilesContextFacade = profilesContextFacade;
     }
 
     @Override
@@ -65,6 +70,30 @@ public class CompetitiveProfileQueryServiceImpl implements CompetitiveProfileQue
         );
 
         return competitiveProfileRepository.findByCurrentRank(rankEntity, pageable);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<CompetitiveProfile> handle(GetCompetitiveProfileByUsernameQuery query) {
+        logger.debug("Fetching competitive profile for username: {}", query.username());
+
+        // Step 1: Get userId from Profiles BC via ACL
+        var userId = profilesContextFacade.getUserIdByUsername(query.username());
+
+        if (userId == null) {
+            logger.debug("User not found for username: {}", query.username());
+            return Optional.empty();
+        }
+
+        // Step 2: Find competitive profile by userId
+        var competitiveUserId = new CompetitiveUserId(userId);
+        var profile = competitiveProfileRepository.findByUserId(competitiveUserId);
+
+        if (profile.isEmpty()) {
+            logger.debug("Competitive profile not found for username: {}", query.username());
+        }
+
+        return profile;
     }
 
     @Override

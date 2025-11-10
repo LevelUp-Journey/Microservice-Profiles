@@ -3,6 +3,7 @@ package com.levelup.journey.platform.microserviceprofiles.competitive.domain.ser
 import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.aggregates.CompetitiveProfile;
 import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.queries.GetAllCompetitiveProfilesQuery;
 import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.queries.GetCompetitiveProfileByUserIdQuery;
+import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.queries.GetCompetitiveProfileByUsernameQuery;
 import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.queries.GetUsersByRankQuery;
 
 import java.util.List;
@@ -22,6 +23,15 @@ public interface CompetitiveProfileQueryService {
      * @return Optional of {@link CompetitiveProfile}
      */
     Optional<CompetitiveProfile> handle(GetCompetitiveProfileByUserIdQuery query);
+
+    /**
+     * Handle Get Competitive Profile By Username Query
+     * Retrieves a user's competitive profile by their username
+     *
+     * @param query The {@link GetCompetitiveProfileByUsernameQuery}
+     * @return Optional of {@link CompetitiveProfile}
+     */
+    Optional<CompetitiveProfile> handle(GetCompetitiveProfileByUsernameQuery query);
 
     /**
      * Handle Get Users By Rank Query
