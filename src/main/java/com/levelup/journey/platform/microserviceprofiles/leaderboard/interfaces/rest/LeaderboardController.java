@@ -32,14 +32,17 @@ public class LeaderboardController {
     private final LeaderboardCommandService leaderboardCommandService;
     private final LeaderboardQueryService leaderboardQueryService;
     private final LeaderboardEntryRepository leaderboardEntryRepository;
+    private final LeaderboardEntryResourceFromEntityAssembler assembler;
 
     public LeaderboardController(
             LeaderboardCommandService leaderboardCommandService,
             LeaderboardQueryService leaderboardQueryService,
-            LeaderboardEntryRepository leaderboardEntryRepository) {
+            LeaderboardEntryRepository leaderboardEntryRepository,
+            LeaderboardEntryResourceFromEntityAssembler assembler) {
         this.leaderboardCommandService = leaderboardCommandService;
         this.leaderboardQueryService = leaderboardQueryService;
         this.leaderboardEntryRepository = leaderboardEntryRepository;
+        this.assembler = assembler;
     }
 
     /**
@@ -60,7 +63,7 @@ public class LeaderboardController {
         var entries = leaderboardQueryService.handle(query);
 
         var resources = entries.stream()
-                .map(LeaderboardEntryResourceFromEntityAssembler::toResourceFromEntity)
+                .map(assembler::toResourceFromEntity)
                 .toList();
 
         return ResponseEntity.ok(resources);
@@ -102,7 +105,7 @@ public class LeaderboardController {
         var entries = leaderboardQueryService.handle(query);
 
         var resources = entries.stream()
-                .map(LeaderboardEntryResourceFromEntityAssembler::toResourceFromEntity)
+                .map(assembler::toResourceFromEntity)
                 .toList();
 
         var response = new LeaderboardResponse(resources, totalUsers);
@@ -129,7 +132,7 @@ public class LeaderboardController {
             return ResponseEntity.notFound().build();
         }
 
-        var resource = LeaderboardEntryResourceFromEntityAssembler.toResourceFromEntity(entry.get());
+        var resource = assembler.toResourceFromEntity(entry.get());
         return ResponseEntity.ok(resource);
     }
 

@@ -3,6 +3,7 @@ package com.levelup.journey.platform.microserviceprofiles.competitive.interfaces
 import com.levelup.journey.platform.microserviceprofiles.competitive.domain.model.aggregates.CompetitiveProfile;
 import com.levelup.journey.platform.microserviceprofiles.competitive.interfaces.rest.resources.CompetitiveProfileResource;
 import com.levelup.journey.platform.microserviceprofiles.leaderboard.interfaces.acl.LeaderboardContextFacade;
+import com.levelup.journey.platform.microserviceprofiles.profiles.interfaces.acl.ProfilesContextFacade;
 import org.springframework.stereotype.Component;
 
 /**
@@ -13,9 +14,13 @@ import org.springframework.stereotype.Component;
 public class CompetitiveProfileResourceFromEntityAssembler {
 
     private final LeaderboardContextFacade leaderboardContextFacade;
+    private final ProfilesContextFacade profilesContextFacade;
 
-    public CompetitiveProfileResourceFromEntityAssembler(LeaderboardContextFacade leaderboardContextFacade) {
+    public CompetitiveProfileResourceFromEntityAssembler(
+            LeaderboardContextFacade leaderboardContextFacade,
+            ProfilesContextFacade profilesContextFacade) {
         this.leaderboardContextFacade = leaderboardContextFacade;
+        this.profilesContextFacade = profilesContextFacade;
     }
 
     /**
@@ -30,13 +35,17 @@ public class CompetitiveProfileResourceFromEntityAssembler {
         var nextRank = currentRankEnum.getNextRank();
         var pointsNeeded = nextRank != null ? nextRank.getMinimumPoints() - entity.getTotalPoints() : 0;
 
-        // Get leaderboard position via ACL facade
+        // Get username via Profiles ACL facade
+        var username = profilesContextFacade.getUsernameByUserId(entity.getUserId());
+
+        // Get leaderboard position via Leaderboard ACL facade
         var leaderboardPosition = leaderboardContextFacade.getUserPosition(entity.getUserId());
         var position = leaderboardPosition > 0 ? leaderboardPosition : null;
 
         return new CompetitiveProfileResource(
                 entity.getId().toString(),
                 entity.getUserId(),
+                username,
                 entity.getTotalPoints(),
                 currentRankEnum.name(),
                 nextRank != null ? nextRank.name() : null,
