@@ -95,4 +95,15 @@ public class KafkaProducerConfig {
                 .replicas(1)    // 1 replica for development (adjust for production)
                 .build();
     }
+
+    /**
+     * Define community-profile-updated topic to broadcast profile changes
+     */
+    @Bean
+    public NewTopic communityProfileUpdatedTopic(@Value("${app.kafka.topics.community-profile-updated}") String topicName) {
+        return TopicBuilder.name(topicName)
+                .partitions(3)
+                .replicas(1)
+                .build();
+    }
 }

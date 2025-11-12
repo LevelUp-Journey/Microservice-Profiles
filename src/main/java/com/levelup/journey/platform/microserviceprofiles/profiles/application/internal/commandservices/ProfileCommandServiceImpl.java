@@ -5,11 +5,13 @@ import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.c
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.commands.UpdateProfileCommand;
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.events.ProfileCreatedEvent;
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.events.ProfileRegisteredEvent;
+import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.events.ProfileUpdatedEvent;
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.valueobjects.UserId;
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.valueobjects.Username;
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.services.ProfileCommandService;
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.services.UsernameGeneratorService;
 import com.levelup.journey.platform.microserviceprofiles.profiles.infrastructure.messaging.kafka.ProfileRegisteredKafkaPublisher;
+import com.levelup.journey.platform.microserviceprofiles.profiles.infrastructure.messaging.kafka.ProfileUpdatedKafkaPublisher;
 import com.levelup.journey.platform.microserviceprofiles.profiles.infrastructure.persistence.jpa.repositories.ProfileRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,6 +32,7 @@ public class ProfileCommandServiceImpl implements ProfileCommandService {
     private final UsernameGeneratorService usernameGeneratorService;
     private final ApplicationEventPublisher eventPublisher;
     private final ProfileRegisteredKafkaPublisher profileRegisteredKafkaPublisher;
+    private final ProfileUpdatedKafkaPublisher profileUpdatedKafkaPublisher;
 
     /**
      * Constructor
@@ -42,11 +45,13 @@ public class ProfileCommandServiceImpl implements ProfileCommandService {
     public ProfileCommandServiceImpl(ProfileRepository profileRepository,
                                    UsernameGeneratorService usernameGeneratorService,
                                    ApplicationEventPublisher eventPublisher,
-                                   ProfileRegisteredKafkaPublisher profileRegisteredKafkaPublisher) {
+                                   ProfileRegisteredKafkaPublisher profileRegisteredKafkaPublisher,
+                                   ProfileUpdatedKafkaPublisher profileUpdatedKafkaPublisher) {
         this.profileRepository = profileRepository;
         this.usernameGeneratorService = usernameGeneratorService;
         this.eventPublisher = eventPublisher;
         this.profileRegisteredKafkaPublisher = profileRegisteredKafkaPublisher;
+        this.profileUpdatedKafkaPublisher = profileUpdatedKafkaPublisher;
     }
 
     // inherited javadoc
@@ -84,7 +89,9 @@ public class ProfileCommandServiceImpl implements ProfileCommandService {
         // Publish Kafka event to community-registration topic for external microservices
         var profileRegisteredEvent = new ProfileRegisteredEvent(
                 savedProfile.getUserId(),
-                savedProfile.getId().toString()
+                savedProfile.getId().toString(),
+                savedProfile.getUsername(),
+                savedProfile.getProfileUrl()
         );
         profileRegisteredKafkaPublisher.publish(profileRegisteredEvent);
 
@@ -119,6 +126,17 @@ public class ProfileCommandServiceImpl implements ProfileCommandService {
 
         // Save updated profile
         var savedProfile = profileRepository.save(profile);
+
+        // Publish Kafka event notifying community about profile updates
+        var profileUpdatedEvent = new ProfileUpdatedEvent(
+                savedProfile.getUserId(),
+                savedProfile.getId().toString(),
+                savedProfile.getUsername(),
+                savedProfile.getProfileUrl()
+        );
+        profileUpdatedKafkaPublisher.publish(profileUpdatedEvent);
+        logger.info("ProfileUpdatedEvent published to Kafka - userId: {}, profileId: {}",
+                savedProfile.getUserId(), savedProfile.getId());
 
         return Optional.of(savedProfile);
     }
