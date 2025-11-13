@@ -28,12 +28,14 @@ public class ProfileRegisteredEvent {
      *
      * @param userId The user's unique identifier from IAM service (UUID)
      * @param profileId The profile's unique identifier from Profiles service (UUID)
+     * @param username The username assigned to the profile
+     * @param profileUrl The profile URL (can be null for local registrations)
      */
     public ProfileRegisteredEvent(String userId, String profileId, String username, String profileUrl) {
         this.userId = Objects.requireNonNull(userId, "userId is required");
         this.profileId = Objects.requireNonNull(profileId, "profileId is required");
         this.username = Objects.requireNonNull(username, "username is required");
-        this.profileUrl = Objects.requireNonNull(profileUrl, "profileUrl is required");
+        this.profileUrl = profileUrl; // Allow null for local registrations
         this.occurredOn = LocalDateTime.now();
     }
 }
