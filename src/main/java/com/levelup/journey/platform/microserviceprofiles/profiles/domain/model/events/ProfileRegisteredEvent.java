@@ -3,6 +3,7 @@ package com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.
 import lombok.Getter;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 /**
  * Profile Registered Event
@@ -18,6 +19,8 @@ public class ProfileRegisteredEvent {
 
     private final String userId;
     private final String profileId;
+    private final String username;
+    private final String profileUrl;
     private final LocalDateTime occurredOn;
 
     /**
@@ -26,9 +29,11 @@ public class ProfileRegisteredEvent {
      * @param userId The user's unique identifier from IAM service (UUID)
      * @param profileId The profile's unique identifier from Profiles service (UUID)
      */
-    public ProfileRegisteredEvent(String userId, String profileId) {
-        this.userId = userId;
-        this.profileId = profileId;
+    public ProfileRegisteredEvent(String userId, String profileId, String username, String profileUrl) {
+        this.userId = Objects.requireNonNull(userId, "userId is required");
+        this.profileId = Objects.requireNonNull(profileId, "profileId is required");
+        this.username = Objects.requireNonNull(username, "username is required");
+        this.profileUrl = Objects.requireNonNull(profileUrl, "profileUrl is required");
         this.occurredOn = LocalDateTime.now();
     }
 }

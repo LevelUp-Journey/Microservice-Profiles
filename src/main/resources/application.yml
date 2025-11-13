@@ -108,6 +108,7 @@ app:
             user-registered: ${KAFKA_TOPIC_USER_REGISTERED:iam.user.registered}
             challenge-completed: ${KAFKA_TOPIC_CHALLENGE_COMPLETED:challenge.completed}
             community-registration: ${KAFKA_TOPIC_COMMUNITY_REGISTRATION:community.registration}
+            community-profile-updated: ${KAFKA_TOPIC_COMMUNITY_PROFILE_UPDATED:community.profile.updated}
     cors:
         allowed-origins: "http://localhost:3000,http://localhost:8080"
         allowed-methods: "GET,POST,PUT,DELETE,PATCH,OPTIONS"
