@@ -4,8 +4,6 @@ import com.levelup.journey.platform.microserviceprofiles.shared.domain.model.agg
 import com.levelup.journey.platform.microserviceprofiles.suggestions.domain.model.commands.CreateSuggestionCommand;
 import jakarta.persistence.*;
 
-import java.time.LocalDateTime;
-
 /**
  * Suggestion Aggregate Root
  * Represents a user suggestion in the platform
@@ -16,9 +14,6 @@ public class Suggestion extends AuditableAbstractAggregateRoot<Suggestion> {
 
     @Column(nullable = false, columnDefinition = "TEXT")
     private String comment;
-
-    @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt;
 
     @Column(name = "is_resolved", nullable = false)
     private Boolean isResolved;
@@ -34,7 +29,6 @@ public class Suggestion extends AuditableAbstractAggregateRoot<Suggestion> {
      */
     public Suggestion(CreateSuggestionCommand command) {
         this.comment = command.comment();
-        this.createdAt = LocalDateTime.now();
         this.isResolved = false;
     }
 
@@ -42,10 +36,6 @@ public class Suggestion extends AuditableAbstractAggregateRoot<Suggestion> {
 
     public String getComment() {
         return comment;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
     }
 
     public Boolean getIsResolved() {

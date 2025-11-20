@@ -2,7 +2,8 @@ package com.levelup.journey.platform.microserviceprofiles.suggestions.interfaces
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
-import java.time.LocalDateTime;
+import java.util.Date;
+import java.util.UUID;
 
 /**
  * Suggestion Resource
@@ -10,14 +11,14 @@ import java.time.LocalDateTime;
  */
 @Schema(description = "Suggestion details")
 public record SuggestionResource(
-        @Schema(description = "Suggestion identifier", example = "1")
-        Long id,
+        @Schema(description = "Suggestion identifier", example = "123e4567-e89b-12d3-a456-426614174000")
+        UUID id,
 
         @Schema(description = "Suggestion comment", example = "This is a suggestion")
         String comment,
 
         @Schema(description = "Creation timestamp")
-        LocalDateTime createdAt,
+        Date createdAt,
 
         @Schema(description = "Resolution status", example = "false")
         Boolean isResolved
