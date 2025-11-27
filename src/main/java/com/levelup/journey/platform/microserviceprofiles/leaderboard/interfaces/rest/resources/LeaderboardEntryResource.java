@@ -14,6 +14,9 @@ public record LeaderboardEntryResource(
         @Schema(description = "User identifier", example = "user123")
         String userId,
 
+        @Schema(description = "Username", example = "john_doe")
+        String username,
+
         @Schema(description = "Total points", example = "5420")
         Integer totalPoints,
 

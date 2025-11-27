@@ -2,6 +2,7 @@ package com.levelup.journey.platform.microserviceprofiles.profiles.application.i
 
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.aggregates.Profile;
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.queries.GetAllProfilesQuery;
+import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.queries.GetAllProfilesForSyncQuery;
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.queries.GetProfileByUsernameQuery;
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.queries.GetProfileByIdQuery;
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.queries.GetProfileByUserIdQuery;
@@ -57,5 +58,11 @@ public class ProfileQueryServiceImpl implements ProfileQueryService {
     @Override
     public List<Profile> handle(SearchUsersByUsernameQuery query) {
         return profileRepository.findByUsernameUsernameContainingIgnoreCase(query.usernamePattern());
+    }
+
+    // inherited javadoc
+    @Override
+    public List<Profile> handle(GetAllProfilesForSyncQuery query) {
+        return profileRepository.findAll();
     }
 }

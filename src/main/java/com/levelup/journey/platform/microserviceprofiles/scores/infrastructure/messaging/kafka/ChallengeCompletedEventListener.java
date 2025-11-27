@@ -28,21 +28,26 @@ public class ChallengeCompletedEventListener {
     }
 
     @KafkaListener(
-            topics = "${spring.kafka.consumer.topic.challenge-completed:challenge.completed}",
+            topics = "${app.kafka.topics.challenge-completed:challenge.completed}",
             groupId = "${spring.kafka.consumer.group-id:profile-service-group}"
     )
     @SuppressWarnings("java:S1166") // Exception details logged separately
     public void handleChallengeCompleted(String message) {
-        logger.info("Received challenge completion event: {}", message);
+        logger.info("📥 Received challenge completion message from Kafka");
 
+        String userId = null;
         try {
-            // Parse JSON message
+            // Parse JSON message directly without DTO
             JsonNode eventData = objectMapper.readTree(message);
 
-            String userId = eventData.get("studentId").asText();
+            userId = eventData.get("studentId").asText();
             String challengeId = eventData.get("challengeId").asText();
             String challengeType = "CHALLENGE"; // Default type as it's not in the event
             Integer points = eventData.get("experiencePointsEarned").asInt();
+
+            // Check if challenge was already completed
+            boolean alreadyCompleted = eventData.has("alreadyCompleted")
+                    && eventData.get("alreadyCompleted").asBoolean();
 
             // Extract execution time if available (time taken to run the tests)
             Long executionTimeMs = eventData.has("executionTimeMs")
@@ -54,7 +59,17 @@ public class ChallengeCompletedEventListener {
                     ? eventData.get("solutionTimeSeconds").asLong()
                     : 0L;
 
-            logger.info("Challenge completed by user {} with {} points, execution time: {} ms, solution time: {} s",
+            logger.info("📥 Parsed event: studentId={}, challengeId={}, points={}, alreadyCompleted={}",
+                    userId, challengeId, points, alreadyCompleted);
+
+            // Skip score assignment if challenge was already completed
+            if (alreadyCompleted) {
+                logger.info("⏭️ Challenge {} already completed by user {}. Skipping score assignment.",
+                        challengeId, userId);
+                return;
+            }
+
+            logger.info("✅ Challenge completed by user {} with {} points, execution time: {} ms, solution time: {} s",
                     userId, points, executionTimeMs, solutionTimeSeconds);
 
             // Create command
@@ -78,7 +93,11 @@ public class ChallengeCompletedEventListener {
             }
 
         } catch (Exception e) {
-            logger.error("Error processing challenge completion event: {}", e.getMessage());
+            String studentId = (userId != null) ? userId : "unknown";
+            logger.error("❌ Error processing challenge completion event for studentId={}: {}",
+                    studentId, e.getMessage(), e);
+            // Re-lanzar para que el error handler lo maneje con reintentos
+            throw new RuntimeException("Failed to process ChallengeCompleted event", e);
         }
     }
 }

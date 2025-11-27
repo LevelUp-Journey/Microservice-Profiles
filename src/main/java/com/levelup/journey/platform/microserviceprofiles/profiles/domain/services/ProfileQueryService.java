@@ -2,6 +2,7 @@ package com.levelup.journey.platform.microserviceprofiles.profiles.domain.servic
 
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.aggregates.Profile;
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.queries.GetAllProfilesQuery;
+import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.queries.GetAllProfilesForSyncQuery;
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.queries.GetProfileByUsernameQuery;
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.queries.GetProfileByIdQuery;
 import com.levelup.journey.platform.microserviceprofiles.profiles.domain.model.queries.GetProfileByUserIdQuery;
@@ -53,4 +54,13 @@ public interface ProfileQueryService {
      * @return A list of {@link Profile} instances matching the username pattern
      */
     List<Profile> handle(SearchUsersByUsernameQuery query);
+
+    /**
+     * Handle Get All Profiles For Sync Query
+     * Retrieves all profiles for synchronization with external services
+     *
+     * @param query The {@link GetAllProfilesForSyncQuery} Query
+     * @return A list of all {@link Profile} instances
+     */
+    List<Profile> handle(GetAllProfilesForSyncQuery query);
 }
